@@ -6,9 +6,9 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './components/Profile';
-import ResumeScore from './components/ResumeScore'; // ✅ new
-import ResumeBuilder from './components/ResumeBuilder'; // placeholder
-import LoggedInHome from './pages/LoggedInHome'; // 🎯 logged-in landing
+import ResumeScore from './components/ResumeScore';
+import ResumeBuilder from './components/ResumeBuilder';
+import LoggedInHome from './pages/LoggedInHome';
 
 import Navbar from './components/Navbar';
 
@@ -35,7 +35,7 @@ function App() {
           <Route path="/home" element={userToken ? <LoggedInHome /> : <Navigate to="/login" />} />
 
           {/* 👤 User profile */}
-<Route path="/profile" element={userToken ? <Profile token={userToken} /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={userToken ? <Profile token={userToken} /> : <Navigate to="/login" />} />
 
           {/* 📄 Resume scoring */}
           <Route path="/resume-score" element={userToken ? <ResumeScore token={userToken} /> : <Navigate to="/login" />} />
