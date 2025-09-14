@@ -5,26 +5,54 @@ const { User } = require('../models');
 const verifyToken = require('../middleware/auth');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-production';
 
 // Register route
 router.post('/register', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password, profession, location, bio } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(409).json({ error: 'User already exists' });
+      return res.status(409).json({ error: 'User already exists with this email' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ email, password: hashedPassword });
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      profession,
+      location,
+      bio
+    });
 
-    return res.status(201).json({ message: 'User registered successfully' });
+    const token = jwt.sign(
+      { user_id: newUser.id },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        profession: newUser.profession,
+        location: newUser.location,
+        bio: newUser.bio
+      }
+    });
   } catch (error) {
     console.error('Registration error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -36,21 +64,36 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
     const user = await User.findOne({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const token = jwt.sign(
       { user_id: user.id },
       JWT_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: '7d' }
     );
 
     return res.json({
       token,
-      user_id: user.id,
-      email: user.email
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profession: user.profession,
+        location: user.location,
+        bio: user.bio
+      }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -58,29 +101,25 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Get user profile
+// Get user profile - PROTECTED
 router.get('/profile', verifyToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.userId);
+    const user = await User.findByPk(req.userId, {
+      attributes: { exclude: ['password'] }
+    });
+    
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    return res.json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      profession: user.profession,
-      location: user.location,
-      bio: user.bio
-    });
+    return res.json(user);
   } catch (error) {
     console.error('Profile fetch error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Update user profile
+// Update user profile - PROTECTED
 router.put('/profile', verifyToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.userId);
@@ -90,14 +129,24 @@ router.put('/profile', verifyToken, async (req, res) => {
 
     const { name, profession, location, bio } = req.body;
     
-    user.name = name || user.name;
-    user.profession = profession || user.profession;
-    user.location = location || user.location;
-    user.bio = bio || user.bio;
+    if (name !== undefined) user.name = name;
+    if (profession !== undefined) user.profession = profession;
+    if (location !== undefined) user.location = location;
+    if (bio !== undefined) user.bio = bio;
 
     await user.save();
 
-    return res.json({ message: 'Profile updated successfully' });
+    return res.json({ 
+      message: 'Profile updated successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profession: user.profession,
+        location: user.location,
+        bio: user.bio
+      }
+    });
   } catch (error) {
     console.error('Profile update error:', error);
     return res.status(500).json({ error: 'Internal server error' });

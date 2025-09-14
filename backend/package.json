@@ -1,30 +1,26 @@
 {
-  "name": "ats-backend",
+  "name": "ats-resume-checker-backend",
   "version": "1.0.0",
-  "description": "ATS Resume Checker Backend in Node.js",
+  "description": "Backend for ATS Resume Checker",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "setup": "npm install && mkdir -p data uploads"
+    "init-db": "node init-database.js",
+    "backup-db": "node backup-database.js",
+    "reset-db": "node reset-database.js",
+    "db-info": "node -e \"const sqlite3 = require('sqlite3').verbose(); const db = new sqlite3.Database('data/database.db'); db.all('SELECT name FROM sqlite_master WHERE type=\\\"table\\\"', (err, tables) => { console.log('Tables:', tables); }); db.close();\""
   },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "sqlite3": "^5.1.6",
     "sequelize": "^6.32.1",
+    "sqlite3": "^5.1.6",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "pdf-parse": "^1.1.1",
-    "natural": "^6.3.0",
-    "cosine-similarity": "^1.0.0",
-    "dotenv": "^16.3.1"
+    "jsonwebtoken": "^9.0.1",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

@@ -45,19 +45,26 @@ const ResumeAnalysis = sequelize.define('ResumeAnalysis', {
   },
   grammar_issues: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    defaultValue: '[]'
   },
   matched_keywords: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    defaultValue: '[]'
   },
   missing_keywords: {
     type: DataTypes.TEXT,
+    allowNull: true,
+    defaultValue: '[]'
+  },
+  keyword_match_percentage: {
+    type: DataTypes.FLOAT,
     allowNull: true
   },
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
     references: {
       model: 'users',
       key: 'id'
@@ -65,7 +72,7 @@ const ResumeAnalysis = sequelize.define('ResumeAnalysis', {
   }
 }, {
   tableName: 'resume_analyses',
-  timestamps: false
+  timestamps: true  // ✅ This enables createdAt and updatedAt
 });
 
 module.exports = ResumeAnalysis;
