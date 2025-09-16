@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { 
   FaUser, 
   FaEnvelope, 
@@ -20,10 +21,12 @@ import {
   FaMagic,
   FaExclamationCircle,
   FaSync,
-  FaFileAlt
+  FaFileAlt,
+  FaTrash,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 
-const Profile = ({ token }) => {
+const Profile = ({ token, onLogout }) => {
   const [user, setUser] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -43,6 +46,10 @@ const Profile = ({ token }) => {
   const [saveStatus, setSaveStatus] = useState('');
   const [error, setError] = useState(null);
   const [statsError, setStatsError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteStatus, setDeleteStatus] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProfile();
@@ -147,6 +154,40 @@ const Profile = ({ token }) => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      setDeleteStatus('deleting');
+      
+      const response = await axios.delete('http://localhost:5000/api/delete-account', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        data: { password: deletePassword }
+      });
+      
+      setDeleteStatus('success');
+      
+      // Logout and redirect after successful deletion
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (onLogout) onLogout();
+        navigate('/');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Delete account error:', error);
+      setDeleteStatus('error');
+      setDeletePassword('');
+      
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else {
+        setError('Failed to delete account. Please try again.');
+      }
+    }
+  };
+
   const getInitials = (name) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
   };
@@ -171,7 +212,7 @@ const Profile = ({ token }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 p-6 relative overflow-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyek0yIDM0aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnoiIHN0cm9rZT0iI2VlZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMiIvPjwvZz48L3N2Zz4=')] opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyem0wLTRoLTJ2LTJoMnYyek0yIDM0aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnptMC00aC0ydi0yaDJ2MnoiIHN0cm9rZT0iI2VlZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMiIvPjwvZz48L3N2Zz4=')] opacity-10"></div>
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
@@ -233,6 +274,16 @@ const Profile = ({ token }) => {
                 <p className="text-blue-600 mb-4">
                   {user?.profession || 'Professional Title'}
                 </p>
+
+                {user?.is_verified ? (
+                  <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">
+                    ✓ Email Verified
+                  </span>
+                ) : (
+                  <span className="bg-yellow-100 text-yellow-800 text-sm px-3 py-1 rounded-full">
+                    ⚠️ Email Not Verified
+                  </span>
+                )}
               </div>
 
               {/* Stats - REAL DATA FROM API */}
@@ -462,6 +513,28 @@ const Profile = ({ token }) => {
               </div>
             </div>
 
+            {/* Danger Zone - Delete Account */}
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 border border-red-200 shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-red-600 flex items-center">
+                  <FaExclamationTriangle className="mr-3 text-red-500" />
+                  Danger Zone
+                </h3>
+              </div>
+
+              <p className="text-gray-700 mb-4">
+                Once you delete your account, there is no going back. All your data will be permanently deleted.
+              </p>
+
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center"
+              >
+                <FaTrash className="mr-2" />
+                Delete Account
+              </button>
+            </div>
+
             {/* Save Button */}
             {isEditing && (
               <div className="text-center">
@@ -507,6 +580,90 @@ const Profile = ({ token }) => {
           <FaRocket />
         </button>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => !deleteStatus && setShowDeleteConfirm(false)}
+        >
+          <motion.div 
+            className="bg-white rounded-2xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-red-600 mb-4 flex items-center">
+              <FaExclamationTriangle className="mr-2" />
+              Delete Account
+            </h3>
+            
+            {deleteStatus === 'success' ? (
+              <div className="text-center py-6">
+                <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-green-600 font-semibold">Account deleted successfully</p>
+                <p className="text-gray-600 mt-2">Redirecting to home page...</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-700 mb-4">
+                  This action cannot be undone. All your data will be permanently deleted.
+                  Please enter your password to confirm.
+                </p>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="Enter your password"
+                    disabled={deleteStatus === 'deleting'}
+                  />
+                </div>
+                
+                {deleteStatus === 'error' && (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-lg mb-4">
+                    {error}
+                  </div>
+                )}
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeletePassword('');
+                      setDeleteStatus('');
+                    }}
+                    className="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-colors"
+                    disabled={deleteStatus === 'deleting'}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={!deletePassword || deleteStatus === 'deleting'}
+                    className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                  >
+                    {deleteStatus === 'deleting' ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <FaTrash className="mr-2" />
+                        Delete Account
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };

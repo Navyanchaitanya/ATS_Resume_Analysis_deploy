@@ -31,10 +31,26 @@ const User = sequelize.define('User', {
   bio: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  security_question: {
+    type: DataTypes.STRING(200),
+    allowNull: false
+  },
+  security_answer: {
+    type: DataTypes.STRING(200),
+    allowNull: false
+  },
+  reset_token: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
+  reset_token_expiry: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   tableName: 'users',
-  timestamps: true  // ✅ This enables createdAt and updatedAt
+  timestamps: true
 });
 
 module.exports = User;

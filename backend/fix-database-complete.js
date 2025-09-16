@@ -4,9 +4,9 @@ const path = require('path');
 const dbPath = path.join(__dirname, 'data', 'database.db');
 const db = new sqlite3.Database(dbPath);
 
-console.log('🔄 Fixing database schema...');
+console.log('🔄 Completing database schema...');
 
-// Add all missing columns
+// All columns that should exist
 const columnsToAdd = [
   'createdAt DATETIME',
   'updatedAt DATETIME',
@@ -22,33 +22,33 @@ columnsToAdd.forEach(column => {
   const columnName = column.split(' ')[0];
   db.run(`ALTER TABLE users ADD COLUMN ${column}`, (err) => {
     if (err && !err.message.includes('duplicate column name')) {
-      console.error(`Error adding ${columnName} to users:`, err.message);
+      console.error(`❌ Error adding ${columnName}:`, err.message);
     } else {
-      console.log(`✅ Added ${columnName} to users table`);
+      console.log(`✅ Added ${columnName}`);
     }
   });
 });
 
-// Add timestamp columns to resume_analyses table
+// Add timestamp columns to resume_analyses table if needed
 db.run(`ALTER TABLE resume_analyses ADD COLUMN createdAt DATETIME`, (err) => {
   if (err && !err.message.includes('duplicate column name')) {
-    console.error('Error adding createdAt to resume_analyses:', err.message);
+    console.error('❌ Error adding createdAt to resume_analyses:', err.message);
   } else {
-    console.log('✅ Added createdAt to resume_analyses table');
+    console.log('✅ Added createdAt to resume_analyses');
   }
 });
 
 db.run(`ALTER TABLE resume_analyses ADD COLUMN updatedAt DATETIME`, (err) => {
   if (err && !err.message.includes('duplicate column name')) {
-    console.error('Error adding updatedAt to resume_analyses:', err.message);
+    console.error('❌ Error adding updatedAt to resume_analyses:', err.message);
   } else {
-    console.log('✅ Added updatedAt to resume_analyses table');
+    console.log('✅ Added updatedAt to resume_analyses');
   }
 });
 
-// Close database after 3 seconds
+// Close database after 5 seconds
 setTimeout(() => {
   db.close();
-  console.log('✅ Database fix completed!');
+  console.log('✅ Database schema update completed!');
   console.log('🚀 Restart your server now.');
-}, 3000);
+}, 5000);
