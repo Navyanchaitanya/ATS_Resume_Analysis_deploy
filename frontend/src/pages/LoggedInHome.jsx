@@ -455,5 +455,4 @@ const LoggedInHome = ({ token }) => {
     </div>
   );
 };
-
 export default LoggedInHome;
