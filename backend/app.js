@@ -28,7 +28,7 @@ if (!fs.existsSync(backupsDir)) {
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: path.join(dataDir, 'database.db'),
-  logging: console.log
+  logging: false
 });
 
 // Simple database backup function
@@ -70,12 +70,16 @@ function backupDatabase() {
 })();
 
 // Middleware - Enhanced CORS configuration
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? false // Let Render handle it
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Pre-flight requests
 app.options('*', cors());
@@ -83,8 +87,15 @@ app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files from frontend in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+}
+
+// Routes
+app.use('/api', authRoutes);
+app.use('/api', analyzeRoutes);
+app.use('/api', userRoutes);
 
 // Test endpoint - NO AUTH REQUIRED
 app.get('/api/test', (req, res) => {
@@ -127,25 +138,27 @@ app.get('/api/db-info', async (req, res) => {
   }
 });
 
-// Routes
-app.use('/api', authRoutes);
-app.use('/api', analyzeRoutes);
-app.use('/api', userRoutes);
-
-// Basic route - NO AUTH REQUIRED
-app.get('/', (req, res) => {
-  res.json({ 
-    message: '🚀 ATS Resume Checker backend is running',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      auth: '/api/login, /api/register, /api/profile',
-      analyze: '/api/analyze, /api/results',
-      user: '/api/user-stats, /api/stats',
-      public: '/api/test, /health, /api/db-info'
-    }
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
   });
-});
+} else {
+  // Basic route - NO AUTH REQUIRED (dev only)
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: '🚀 ATS Resume Checker backend is running',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        auth: '/api/login, /api/register, /api/profile',
+        analyze: '/api/analyze, /api/results',
+        user: '/api/user-stats, /api/stats',
+        public: '/api/test, /health, /api/db-info'
+      }
+    });
+  });
+}
 
 // Error handling middleware
 app.use((error, req, res, next) => {
@@ -171,15 +184,24 @@ app.use((error, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Endpoint not found',
-    message: `The requested endpoint ${req.originalUrl} does not exist.`,
-    availableEndpoints: {
-      auth: ['POST /api/login', 'POST /api/register', 'GET /api/profile'],
-      analyze: ['POST /api/analyze', 'GET /api/results', 'GET /api/user-stats'],
-      public: ['GET /api/test', 'GET /health', 'GET /api/db-info', 'GET /']
-    }
-  });
+  if (process.env.NODE_ENV === 'production' && req.originalUrl.startsWith('/api')) {
+    res.status(404).json({ 
+      error: 'Endpoint not found',
+      message: `The requested endpoint ${req.originalUrl} does not exist.`,
+      availableEndpoints: {
+        auth: ['POST /api/login', 'POST /api/register', 'GET /api/profile'],
+        analyze: ['POST /api/analyze', 'GET /api/results', 'GET /api/user-stats'],
+        public: ['GET /api/test', 'GET /health', 'GET /api/db-info']
+      }
+    });
+  } else if (process.env.NODE_ENV === 'production') {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  } else {
+    res.status(404).json({ 
+      error: 'Endpoint not found',
+      message: `The requested endpoint ${req.originalUrl} does not exist.`
+    });
+  }
 });
 
 // Graceful shutdown
@@ -204,10 +226,15 @@ app.listen(PORT, () => {
   console.log('🚀 ATS Resume Checker Server Started');
   console.log('='.repeat(50));
   console.log(`📍 Port: ${PORT}`);
-  console.log(`🌐 Local: http://localhost:${PORT}`);
-  console.log(`🩺 Health: http://localhost:${PORT}/health`);
-  console.log(`🧪 Test API: http://localhost:${PORT}/api/test`);
-  console.log(`🗄️  DB Info: http://localhost:${PORT}/api/db-info`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`📦 Serving frontend from: ../frontend/dist`);
+  } else {
+    console.log(`🌐 Local: http://localhost:${PORT}`);
+    console.log(`🩺 Health: http://localhost:${PORT}/health`);
+    console.log(`🧪 Test API: http://localhost:${PORT}/api/test`);
+    console.log(`🗄️  DB Info: http://localhost:${PORT}/api/db-info`);
+  }
   console.log('='.repeat(50));
   console.log('💾 Database: SQLite (data/database.db)');
   console.log('📊 Data will persist across server restarts');
