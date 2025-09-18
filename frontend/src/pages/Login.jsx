@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaExclamationTriangle, FaArrowLeft, FaQuestionCircle, FaCheckCircle } from 'react-icons/fa';
+import { API_BASE_URL } from '../App';
 
 function Login({ onLogin }) {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -35,7 +36,7 @@ function Login({ onLogin }) {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/login', {
+      const res = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -52,7 +53,7 @@ function Login({ onLogin }) {
         setError(data.error || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
-      setError('Cannot connect to server. Make sure backend is running on port 5000.');
+      setError('Cannot connect to server. Please try again later.');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -65,7 +66,7 @@ function Login({ onLogin }) {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/get-security-question', {
+      const res = await fetch(`${API_BASE_URL}/api/get-security-question`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotPasswordData.email })
@@ -86,7 +87,7 @@ function Login({ onLogin }) {
         setError(data.error || 'Failed to get security question');
       }
     } catch (err) {
-      setError('Cannot connect to server. Make sure backend is running on port 5000.');
+      setError('Cannot connect to server. Please try again later.');
       console.error('Security question error:', err);
     } finally {
       setLoading(false);
@@ -99,7 +100,7 @@ function Login({ onLogin }) {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/verify-security-answer', {
+      const res = await fetch(`${API_BASE_URL}/api/verify-security-answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +120,7 @@ function Login({ onLogin }) {
         setError(data.error || 'Incorrect security answer. Please try again.');
       }
     } catch (err) {
-      setError('Cannot connect to server. Make sure backend is running on port 5000.');
+      setError('Cannot connect to server. Please try again later.');
       console.error('Security answer error:', err);
     } finally {
       setLoading(false);
@@ -144,7 +145,7 @@ function Login({ onLogin }) {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/reset-password', {
+      const res = await fetch(`${API_BASE_URL}/api/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -163,7 +164,7 @@ function Login({ onLogin }) {
         setError(data.error || 'Failed to reset password');
       }
     } catch (err) {
-      setError('Cannot connect to server. Make sure backend is running on port 5000.');
+      setError('Cannot connect to server. Please try again later.');
       console.error('Reset password error:', err);
     } finally {
       setLoading(false);

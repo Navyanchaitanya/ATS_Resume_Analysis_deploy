@@ -25,6 +25,8 @@ import {
   FaTrash,
   FaExclamationTriangle
 } from 'react-icons/fa';
+import { API_BASE_URL } from '../App';
+
 
 const Profile = ({ token, onLogout }) => {
   const [user, setUser] = useState(null);
@@ -61,7 +63,7 @@ const Profile = ({ token, onLogout }) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get('http://localhost:5000/api/profile', {
+      const response = await axios.get(`${API_BASE_URL}/api/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },

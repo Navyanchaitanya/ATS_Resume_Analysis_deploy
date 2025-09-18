@@ -1,27 +1,31 @@
 {
   "name": "ats-backend",
   "version": "1.0.0",
-  "description": "Backend for ATS Resume Checker",
-  "main": "app.js",
+  "description": "ATS Resume Checker Backend",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
-    "build": "node init-database.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "echo 'Backend build complete'"
   },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3",
-    "multer": "^1.4.5-lts.1",
     "sqlite3": "^5.1.6",
     "sequelize": "^6.35.2",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
     "pdf-parse": "^1.1.1",
     "natural": "^6.3.0",
     "cosine-similarity": "^1.0.0",
-    "dotenv": "^16.3.1"
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

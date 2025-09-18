@@ -21,6 +21,7 @@ import {
   FaSync,
   FaExclamationCircle
 } from 'react-icons/fa';
+import { API_BASE_URL } from '../App';
 
 const LoggedInHome = ({ token }) => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const LoggedInHome = ({ token }) => {
       setApiStatus('Loading data...');
       
       // Load user profile
-      const profileResponse = await axios.get('http://localhost:5000/api/profile', {
+      const profileResponse = await axios.get(`${API_BASE_URL}/api/profile`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -49,7 +50,7 @@ const LoggedInHome = ({ token }) => {
       setUserData(profileResponse.data);
       
       // Load analyses
-      const analysesResponse = await axios.get('http://localhost:5000/api/results', {
+      const analysesResponse = await axios.get(`${API_BASE_URL}/api/results`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -59,7 +60,7 @@ const LoggedInHome = ({ token }) => {
       setAnalyses(analysesResponse.data || []);
       
       // Load stats
-      const statsResponse = await axios.get('http://localhost:5000/api/user-stats', {
+      const statsResponse = await axios.get(`${API_BASE_URL}/api/user-stats`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -83,7 +84,7 @@ const LoggedInHome = ({ token }) => {
       } else if (err.response?.status === 404) {
         setError('Server endpoint not found. Check backend routes.');
       } else if (err.message === 'Network Error') {
-        setError('Cannot connect to server. Make sure backend is running on port 5000.');
+        setError('Cannot connect to server. Please try again.');
       } else {
         setError('Failed to load data. Please try again.');
       }
@@ -455,6 +456,5 @@ const LoggedInHome = ({ token }) => {
     </div>
   );
 };
-
 
 export default LoggedInHome;

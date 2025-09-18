@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUser, FaEnvelope, FaLock, FaBriefcase, FaMapMarkerAlt, FaEdit, FaQuestionCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { API_BASE_URL } from '../App';
 
 function Register({ onRegister }) {
   const [formData, setFormData] = useState({
@@ -49,7 +50,7 @@ function Register({ onRegister }) {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
