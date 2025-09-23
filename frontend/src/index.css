@@ -28,3 +28,25 @@ body {
 .input {
   @apply w-full border px-3 py-2 rounded focus:outline-none focus:ring focus:border-blue-300;
 }
+
+/* Mobile viewport fixes */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Improve mobile scrolling */
+.mobile-menu-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent body scroll when menu is open */
+body.menu-open {
+  overflow: hidden;
+}

@@ -27,80 +27,51 @@ const LoggedInHome = ({ token }) => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [analyses, setAnalyses] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    totalAnalyses: 0,
+    averageScore: 0,
+    highestScore: 0,
+    recentAnalyses: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [apiStatus, setApiStatus] = useState('Connecting to server...');
 
-  // Load all data - NO FALLBACK DATA
+  // Load all data from API
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      setApiStatus('Loading data...');
       
       // Load user profile
       const profileResponse = await axios.get(`${API_BASE_URL}/api/profile`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        timeout: 10000
+        }
       });
       setUserData(profileResponse.data);
+      
+      // Load user stats
+      const statsResponse = await axios.get(`${API_BASE_URL}/api/user-stats`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setStats(statsResponse.data);
       
       // Load analyses
       const analysesResponse = await axios.get(`${API_BASE_URL}/api/results`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        timeout: 10000
+        }
       });
       setAnalyses(analysesResponse.data || []);
       
-      // Load stats
-      const statsResponse = await axios.get(`${API_BASE_URL}/api/user-stats`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      });
-      setStats(statsResponse.data);
-      
-      setApiStatus('Data loaded successfully');
-      
     } catch (err) {
       console.error('Error loading data:', err);
-      
-      if (err.code === 'ECONNABORTED') {
-        setError('Server timeout. Please check if backend is running.');
-      } else if (err.response?.status === 401) {
-        setError('Session expired. Please login again.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      } else if (err.response?.status === 404) {
-        setError('Server endpoint not found. Check backend routes.');
-      } else if (err.message === 'Network Error') {
-        setError('Cannot connect to server. Please try again.');
-      } else {
-        setError('Failed to load data. Please try again.');
-      }
-      
-      setApiStatus('Connection failed');
-      
-      // SET EMPTY DATA INSTEAD OF DEMO DATA
-      setUserData({ name: 'User', profession: 'Not set' });
-      setAnalyses([]);
-      setStats({
-        totalAnalyses: 0,
-        averageScore: 0,
-        highestScore: 0,
-        recentAnalyses: []
-      });
-      
+      setError('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -110,52 +81,9 @@ const LoggedInHome = ({ token }) => {
     if (token) {
       loadData();
     } else {
-      setLoading(false);
-      setError('No authentication token found');
       navigate('/login');
     }
   }, [token, navigate]);
-
-  // Debug panel component
-  const DebugPanel = () => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gray-800 text-white p-4 rounded-lg shadow-xl max-w-md mb-2"
-          >
-            <h3 className="font-bold mb-2 flex items-center gap-2">
-              <FaBug /> Debug Information
-            </h3>
-            <div className="text-sm space-y-2">
-              <div><strong>API Status:</strong> {apiStatus}</div>
-              <div><strong>Token:</strong> {token ? 'Present' : 'Missing'}</div>
-              <div><strong>User Data:</strong> {userData ? 'Loaded' : 'Not loaded'}</div>
-              <div><strong>Analyses:</strong> {analyses.length} items</div>
-              <div><strong>Loading:</strong> {loading ? 'Yes' : 'No'}</div>
-              <div><strong>Error:</strong> {error || 'None'}</div>
-            </div>
-            <button 
-              onClick={loadData}
-              className="mt-3 bg-blue-500 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
-            >
-              <FaSync className="text-xs" /> Retry
-            </button>
-          </motion.div>
-        )}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="bg-gray-800 text-white p-2 rounded-full shadow-lg"
-        >
-          <FaBug />
-        </button>
-      </div>
-    );
-  };
 
   // Stats card component
   const StatCard = ({ value, label, icon, color = "blue" }) => {
@@ -214,7 +142,6 @@ const LoggedInHome = ({ token }) => {
     );
   };
 
-  // Loading component
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
@@ -225,18 +152,13 @@ const LoggedInHome = ({ token }) => {
             className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
           />
           <h2 className="text-xl font-semibold text-gray-700">Loading your dashboard</h2>
-          <p className="text-gray-500 mt-2">{apiStatus}</p>
-          <DebugPanel />
         </div>
       </div>
     );
   }
 
-  // Main dashboard render
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
-      <DebugPanel />
-      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.header 
@@ -249,7 +171,7 @@ const LoggedInHome = ({ token }) => {
               Welcome back, {userData?.name || 'User'}!
             </h1>
             <p className="text-gray-600">
-              Here's your personalized dashboard
+              {userData?.profession || 'Update your profile to add your profession'}
             </p>
           </div>
           
@@ -292,19 +214,19 @@ const LoggedInHome = ({ token }) => {
           className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8"
         >
           <StatCard 
-            value={stats?.totalAnalyses || 0}
+            value={stats.totalAnalyses || 0}
             label="Resumes Analyzed"
             icon={<FaFileAlt />}
             color="blue"
           />
           <StatCard 
-            value={stats?.averageScore ? Math.round(stats.averageScore) : 0}
+            value={stats.averageScore ? Math.round(stats.averageScore) : 0}
             label="Average Score"
             icon={<FaStar />}
             color="green"
           />
           <StatCard 
-            value={stats?.highestScore ? Math.round(stats.highestScore) : 0}
+            value={stats.highestScore ? Math.round(stats.highestScore) : 0}
             label="Highest Score"
             icon={<FaAward />}
             color="yellow"
@@ -393,11 +315,11 @@ const LoggedInHome = ({ token }) => {
                 Recent Activity
               </h3>
               
-              {analyses && analyses.length > 0 ? (
+              {analyses.length > 0 ? (
                 <div className="space-y-4">
                   {analyses.slice(0, 3).map((analysis, index) => (
                     <div
-                      key={index}
+                      key={analysis.id}
                       className="flex items-center justify-between p-3 rounded-xl bg-gray-50"
                     >
                       <div className="flex items-center gap-3">
@@ -414,6 +336,9 @@ const LoggedInHome = ({ token }) => {
                         <div className={`font-bold ${analysis.score?.total >= 80 ? 'text-green-600' : analysis.score?.total >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
                           {analysis.score?.total || 0}%
                         </div>
+                        <div className="text-gray-500 text-xs">
+                          {new Date(analysis.created_at).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -422,6 +347,12 @@ const LoggedInHome = ({ token }) => {
                 <div className="text-center py-4 text-gray-500">
                   <FaFileAlt className="text-3xl mx-auto mb-2 text-gray-300" />
                   <p>No analyses yet. Upload your first resume to get started!</p>
+                  <button
+                    onClick={() => navigate('/resume-score')}
+                    className="text-blue-600 hover:text-blue-800 mt-2"
+                  >
+                    Analyze Resume
+                  </button>
                 </div>
               )}
             </motion.div>
@@ -440,8 +371,8 @@ const LoggedInHome = ({ token }) => {
             Pro Tip
           </h3>
           <p className="text-gray-700">
-            {analyses && analyses.length > 0 
-              ? `Your average score is ${Math.round(stats?.averageScore || 0)}%. Try adding more industry-specific keywords to improve it further!`
+            {stats.totalAnalyses > 0 
+              ? `Your average score is ${Math.round(stats.averageScore || 0)}%. Try adding more industry-specific keywords to improve it further!`
               : 'Use action verbs like "developed", "managed", and "implemented" to start your bullet points for better results.'
             }
           </p>

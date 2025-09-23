@@ -65,4 +65,17 @@ function App() {
   );
 }
 
+// Add this useEffect to your App.jsx
+useEffect(() => {
+  if (isMobileMenuOpen) {
+    document.body.classList.add('menu-open');
+  } else {
+    document.body.classList.remove('menu-open');
+  }
+  
+  return () => {
+    document.body.classList.remove('menu-open');
+  };
+}, [isMobileMenuOpen]);
+
 export default App;
