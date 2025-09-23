@@ -4,7 +4,7 @@
   "description": "ATS Resume Checker - Full Stack",
   "scripts": {
     "render-build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
-    "build": "echo 'Build completed'"
+    "start": "cd backend && npm start"
   },
   "engines": {
     "node": ">=16.0.0"
