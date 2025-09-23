@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: npm run render-build
-    startCommand: npm start
+    startCommand: cd backend && npm run init-db && npm start
     envVars:
       - key: NODE_ENV
         value: production

@@ -1,22 +1,12 @@
 {
   "name": "ats-resume-checker",
   "version": "1.0.0",
-  "description": "ATS Resume Checker - Full Stack Application",
+  "description": "ATS Resume Checker - Full Stack",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:frontend",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm install",
-    "start": "cd backend && npm start",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "render-build": "npm run install:all && npm run build"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+    "render-build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "build": "echo 'Build completed'"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=16.0.0"
   }
 }

@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const ResumeAnalysis = sequelize.define('ResumeAnalysis', {
   id: {
@@ -72,7 +72,7 @@ const ResumeAnalysis = sequelize.define('ResumeAnalysis', {
   }
 }, {
   tableName: 'resume_analyses',
-  timestamps: true  // ✅ This enables createdAt and updatedAt
+  timestamps: true
 });
 
-module.exports = ResumeAnalysis;
+export default ResumeAnalysis;

@@ -10,15 +10,8 @@ import LoggedInHome from './pages/LoggedInHome';
 import Navbar from './components/Navbar';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Determine API base URL based on environment
-const getApiBaseUrl = () => {
-  if (import.meta.env.PROD) {
-    return ''; // Empty for same origin in production
-  }
-  return 'http://localhost:5000';
-};
-
-export const API_BASE_URL = getApiBaseUrl();
+// Auto-detect API URL for Render production
+export const API_BASE_URL = window.location.origin;
 
 function App() {
   const [userToken, setUserToken] = useState(null);
@@ -27,18 +20,12 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    
-    if (token) {
-      setUserToken(token);
-    }
-    
+    if (token) setUserToken(token);
     if (user) {
       try {
         setUserData(JSON.parse(user));
       } catch (error) {
-        console.error('Error parsing user data from localStorage:', error);
         localStorage.removeItem('user');
-        setUserData(null);
       }
     }
   }, []);
@@ -64,14 +51,8 @@ function App() {
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={!userToken ? <Home /> : <Navigate to="/home" />} />
-            <Route 
-              path="/login" 
-              element={!userToken ? <Login onLogin={handleLogin} /> : <Navigate to="/home" />} 
-            />
-            <Route 
-              path="/register" 
-              element={!userToken ? <Register onRegister={handleLogin} /> : <Navigate to="/home" />} 
-            />
+            <Route path="/login" element={!userToken ? <Login onLogin={handleLogin} /> : <Navigate to="/home" />} />
+            <Route path="/register" element={!userToken ? <Register onRegister={handleLogin} /> : <Navigate to="/home" />} />
             <Route path="/home" element={userToken ? <LoggedInHome token={userToken} /> : <Navigate to="/login" />} />
             <Route path="/profile" element={userToken ? <Profile token={userToken} onLogout={handleLogout} /> : <Navigate to="/login" />} />
             <Route path="/resume-score" element={userToken ? <ResumeScore token={userToken} /> : <Navigate to="/login" />} />
