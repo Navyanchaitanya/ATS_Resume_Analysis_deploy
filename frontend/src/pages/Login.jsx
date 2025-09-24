@@ -37,13 +37,21 @@ function Login({ onLogin }) {
     setError('');
 
     try {
+      console.log('Login attempt for:', formData.email);
+      
       const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(formData)
       });
 
+      console.log('Login response status:', response.status);
+      
       const data = await response.json();
+      console.log('Login response data:', data);
       
       if (response.ok) {
         localStorage.setItem('token', data.token);
@@ -54,8 +62,12 @@ function Login({ onLogin }) {
         setError(data.error || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
-      setError('Cannot connect to server. Please try again later.');
       console.error('Login error:', err);
+      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+        setError('Cannot connect to server. Please check your internet connection and try again.');
+      } else {
+        setError('Server error. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,28 +79,49 @@ function Login({ onLogin }) {
     setError('');
 
     try {
+      console.log('Getting security question for:', forgotPasswordData.email);
+      console.log('API URL:', `${API_BASE_URL}/api/get-security-question`);
+      
       const response = await fetch(`${API_BASE_URL}/api/get-security-question`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ email: forgotPasswordData.email })
       });
 
-      const data = await response.json();
+      console.log('Security question response status:', response.status);
       
-      if (response.ok) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Security question response data:', data);
+      
+      if (data.success) {
         if (data.has_user) {
           setSecurityQuestion(data.security_question);
           setForgotPasswordStep(2);
           setForgotPasswordStatus('');
+          setError('');
         } else {
           setForgotPasswordStatus('If this email exists in our system, you will be able to reset your password.');
+          setError('');
         }
       } else {
         setError(data.error || 'Failed to get security question');
       }
     } catch (err) {
-      setError('Cannot connect to server. Please try again later.');
       console.error('Security question error:', err);
+      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+        setError(`Cannot connect to server. Please check if ${API_BASE_URL} is accessible.`);
+      } else if (err.message.includes('HTTP error')) {
+        setError('Server returned an error. Please try again.');
+      } else {
+        setError('Cannot connect to server. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -100,27 +133,46 @@ function Login({ onLogin }) {
     setError('');
 
     try {
+      console.log('Verifying security answer for:', forgotPasswordData.email);
+      
       const response = await fetch(`${API_BASE_URL}/api/verify-security-answer`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           email: forgotPasswordData.email,
           security_answer: forgotPasswordData.security_answer
         })
       });
 
-      const data = await response.json();
+      console.log('Verify answer response status:', response.status);
       
-      if (response.ok && data.success) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Verify answer response data:', data);
+      
+      if (data.success) {
         setForgotPasswordData(prev => ({ ...prev, reset_token: data.reset_token }));
         setForgotPasswordStep(3);
         setForgotPasswordStatus('Security answer verified. You can now reset your password.');
+        setError('');
       } else {
         setError(data.error || 'Please provide a valid security answer.');
       }
     } catch (err) {
-      setError('Cannot connect to server. Please try again later.');
       console.error('Security answer error:', err);
+      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+        setError('Cannot connect to server. Please check your internet connection.');
+      } else if (err.message.includes('HTTP error')) {
+        setError('Server returned an error. Please try again.');
+      } else {
+        setError('Cannot connect to server. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -144,9 +196,14 @@ function Login({ onLogin }) {
     }
 
     try {
+      console.log('Resetting password with token');
+      
       const response = await fetch(`${API_BASE_URL}/api/reset-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           reset_token: forgotPasswordData.reset_token,
           new_password: forgotPasswordData.new_password,
@@ -154,17 +211,31 @@ function Login({ onLogin }) {
         })
       });
 
-      const data = await response.json();
+      console.log('Reset password response status:', response.status);
       
-      if (response.ok && data.success) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Reset password response data:', data);
+      
+      if (data.success) {
         setForgotPasswordStatus('Password reset successfully! You can now login with your new password.');
         setForgotPasswordStep(4);
+        setError('');
       } else {
         setError(data.error || 'Failed to reset password');
       }
     } catch (err) {
-      setError('Cannot connect to server. Please try again later.');
       console.error('Reset password error:', err);
+      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+        setError('Cannot connect to server. Please check your internet connection.');
+      } else if (err.message.includes('HTTP error')) {
+        setError('Server returned an error. Please try again.');
+      } else {
+        setError('Cannot connect to server. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -362,9 +433,11 @@ function Login({ onLogin }) {
           </h2>
           
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-              <FaExclamationTriangle className="mr-3 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+              <div className="flex items-center">
+                <FaExclamationTriangle className="mr-3 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
+              </div>
             </div>
           )}
           
@@ -412,9 +485,11 @@ function Login({ onLogin }) {
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Login to Your Account</h2>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-            <FaExclamationTriangle className="mr-3 flex-shrink-0" />
-            <span>{error}</span>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+            <div className="flex items-center">
+              <FaExclamationTriangle className="mr-3 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
           </div>
         )}
         
