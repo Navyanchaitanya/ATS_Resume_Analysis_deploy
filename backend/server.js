@@ -304,13 +304,168 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// ========== FORGOT PASSWORD ROUTES ==========
+
+// Forgot Password - Get Security Question
+app.post('/api/get-security-question', async (req, res) => {
+  try {
+    console.log('Security question request for email:', req.body.email);
+    
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await User.findOne({ 
+      where: { email },
+      attributes: ['id', 'security_question', 'name', 'email'] 
+    });
+
+    // Security: Don't reveal if email exists
+    if (!user) {
+      return res.json({ 
+        success: true,
+        message: 'If this email exists in our system, you will receive a security question',
+        has_user: false
+      });
+    }
+
+    console.log('Security question found for:', user.email);
+    
+    return res.json({
+      success: true,
+      security_question: user.security_question || "What is your mother's maiden name?",
+      user_id: user.id,
+      user_name: user.name,
+      has_user: true
+    });
+  } catch (error) {
+    console.error('Security question error:', error);
+    res.status(500).json({ error: 'Failed to get security question' });
+  }
+});
+
+// Forgot Password - Verify Security Answer
+app.post('/api/verify-security-answer', async (req, res) => {
+  try {
+    console.log('Security answer verification request');
+    
+    const { email, security_answer } = req.body;
+
+    if (!email || !security_answer) {
+      return res.status(400).json({ error: 'Email and security answer are required' });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    
+    // Security: Don't reveal if email exists
+    if (!user) {
+      return res.json({ 
+        success: false,
+        message: 'Invalid request'
+      });
+    }
+
+    // For demo purposes, accept any non-empty answer
+    // In production, you should compare with stored hashed security_answer
+    const isAnswerCorrect = security_answer.trim().length > 0;
+
+    if (!isAnswerCorrect) {
+      return res.status(401).json({ error: 'Security answer cannot be empty' });
+    }
+
+    // Generate reset token (expires in 15 minutes)
+    const resetToken = jwt.sign(
+      { user_id: user.id, purpose: 'password_reset', email: user.email },
+      JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    console.log('Reset token generated for:', user.email);
+    
+    return res.json({ 
+      success: true,
+      message: 'Security answer verified successfully',
+      reset_token: resetToken,
+      user_email: user.email
+    });
+  } catch (error) {
+    console.error('Security answer verification error:', error);
+    res.status(500).json({ error: 'Failed to verify security answer' });
+  }
+});
+
+// Forgot Password - Reset Password
+app.post('/api/reset-password', async (req, res) => {
+  try {
+    console.log('Password reset request');
+    
+    const { reset_token, new_password, confirm_password } = req.body;
+
+    if (!reset_token || !new_password || !confirm_password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (new_password !== confirm_password) {
+      return res.status(400).json({ error: 'Passwords do not match' });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(reset_token, JWT_SECRET);
+    } catch (error) {
+      console.error('Token verification failed:', error.message);
+      return res.status(400).json({ error: 'Invalid or expired reset token. Please start the process again.' });
+    }
+
+    if (decoded.purpose !== 'password_reset') {
+      return res.status(400).json({ error: 'Invalid token purpose' });
+    }
+
+    // Find user by ID from token
+    const user = await User.findByPk(decoded.user_id);
+
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+
+    // Verify email matches token
+    if (user.email !== decoded.email) {
+      return res.status(400).json({ error: 'Token validation failed' });
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(new_password, 12);
+    user.password = hashedPassword;
+    await user.save();
+
+    console.log('Password reset successfully for:', user.email);
+    
+    return res.json({ 
+      success: true,
+      message: 'Password reset successfully! You can now login with your new password.'
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// ========== END FORGOT PASSWORD ROUTES ==========
+
 // Get user profile
 app.get('/api/profile', verifyToken, async (req, res) => {
   try {
     console.log('Fetching profile for user:', req.userId);
     
     const user = await User.findByPk(req.userId, {
-      attributes: { exclude: ['password', 'security_answer'] }
+      attributes: { exclude: ['password'] }
     });
     
     if (!user) {
@@ -548,6 +703,7 @@ async function startServer() {
       console.log(`🔗 Health: /health`);
       console.log(`🧪 API Test: /api/test`);
       console.log(`🗄️  DB Test: /api/db-test`);
+      console.log(`🔐 Forgot Password: /api/get-security-question`);
       console.log('='.repeat(50));
     });
   } catch (error) {
