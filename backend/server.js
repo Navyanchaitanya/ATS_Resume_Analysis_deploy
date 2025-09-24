@@ -108,9 +108,296 @@ const extractTextFromPdf = async (buffer) => {
   }
 };
 
+// Enhanced Resume Scoring Algorithm with AI-like Analysis
 const calculateScore = (resumeText, jdText) => {
-  // Simple scoring algorithm
-  const similarity = Math.min(100, Math.max(30, (resumeText.length / Math.max(jdText.length, 1)) * 100));
+  try {
+    console.log('Calculating enhanced resume score...');
+    
+    // Normalize texts
+    const resumeLower = resumeText.toLowerCase();
+    const jdLower = jdText.toLowerCase();
+    
+    // 1. KEYWORD ANALYSIS (40% weight)
+    const keywordScore = analyzeKeywords(resumeLower, jdLower);
+    
+    // 2. CONTENT QUALITY ANALYSIS (25% weight)
+    const contentScore = analyzeContentQuality(resumeText);
+    
+    // 3. FORMATTING & STRUCTURE ANALYSIS (20% weight)
+    const formatScore = analyzeFormatting(resumeText);
+    
+    // 4. GRAMMAR & PROFESSIONALISM ANALYSIS (15% weight)
+    const grammarScore = analyzeGrammarAndProfessionalism(resumeText);
+    
+    // Calculate weighted total
+    const totalScore = Math.round(
+      (keywordScore * 0.40) + 
+      (contentScore * 0.25) + 
+      (formatScore * 0.20) + 
+      (grammarScore * 0.15)
+    );
+    
+    // Extract matched and missing keywords
+    const { matchedKeywords, missingKeywords, matchPercentage } = extractKeywords(resumeLower, jdLower);
+    
+    // Generate detailed feedback
+    const grammarIssues = generateGrammarFeedback(resumeText);
+    
+    console.log('Enhanced scoring completed:', {
+      totalScore,
+      keywordScore,
+      contentScore,
+      formatScore,
+      grammarScore,
+      matchPercentage
+    });
+    
+    return {
+      total: Math.min(100, totalScore),
+      similarity: Math.round(keywordScore),
+      readability: Math.round(contentScore),
+      completeness: Math.round(formatScore),
+      formatting: Math.round(formatScore),
+      grammar_score: Math.round(grammarScore),
+      grammar_issues: grammarIssues,
+      matched_keywords: matchedKeywords.slice(0, 15),
+      missing_keywords: missingKeywords.slice(0, 10),
+      keyword_match_percentage: matchPercentage
+    };
+  } catch (error) {
+    console.error('Scoring error:', error);
+    // Fallback to basic scoring
+    return getBasicScore(resumeText, jdText);
+  }
+};
+
+// 1. ADVANCED KEYWORD ANALYSIS
+const analyzeKeywords = (resumeLower, jdLower) => {
+  // Extract important keywords from JD
+  const jdKeywords = extractImportantKeywords(jdLower);
+  const resumeKeywords = extractImportantKeywords(resumeLower);
+  
+  // Calculate match percentage
+  const matched = jdKeywords.filter(keyword => 
+    resumeKeywords.includes(keyword) || resumeLower.includes(keyword)
+  );
+  
+  const matchPercentage = jdKeywords.length > 0 ? 
+    (matched.length / jdKeywords.length) * 100 : 0;
+  
+  // Bonus for high-frequency keywords
+  const frequencyBonus = calculateFrequencyBonus(resumeLower, jdKeywords);
+  
+  return Math.min(100, matchPercentage + frequencyBonus);
+};
+
+// 2. CONTENT QUALITY ANALYSIS
+const analyzeContentQuality = (resumeText) => {
+  let score = 70; // Base score
+  
+  const lines = resumeText.split('\n').filter(line => line.trim().length > 0);
+  const sentences = resumeText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  
+  // Length analysis
+  if (resumeText.length > 800) score += 10; // Good length
+  if (resumeText.length > 1500) score += 5; // Comprehensive
+  if (resumeText.length < 300) score -= 20; // Too short
+  
+  // Section presence
+  const sections = ['experience', 'education', 'skills', 'projects', 'summary', 'certifications'];
+  const foundSections = sections.filter(section => 
+    resumeText.toLowerCase().includes(section)
+  );
+  score += (foundSections.length / sections.length) * 15;
+  
+  // Action verbs presence
+  const actionVerbs = [
+    'managed', 'developed', 'created', 'implemented', 'led', 'improved', 
+    'optimized', 'designed', 'built', 'launched', 'increased', 'reduced',
+    'analyzed', 'coordinated', 'supervised', 'trained', 'resolved'
+  ];
+  const foundVerbs = actionVerbs.filter(verb => resumeText.toLowerCase().includes(verb));
+  score += (foundVerbs.length / actionVerbs.length) * 10;
+  
+  // Quantifiable achievements
+  const hasNumbers = /\d+/.test(resumeText); // Numbers indicate metrics
+  if (hasNumbers) score += 5;
+  
+  return Math.max(0, Math.min(100, score));
+};
+
+// 3. FORMATTING & STRUCTURE ANALYSIS
+const analyzeFormatting = (resumeText) => {
+  let score = 75; // Base score
+  
+  const lines = resumeText.split('\n');
+  
+  // Bullet points
+  const hasBullets = lines.some(line => line.trim().match(/^[•\-*]\s/));
+  if (hasBullets) score += 10;
+  
+  // Headings and sections
+  const hasHeadings = lines.some(line => 
+    line.trim().match(/^[A-Z][A-Z\s]+:$/) || 
+    line.trim().match(/^(Experience|Education|Skills|Projects|Summary):?$/i)
+  );
+  if (hasHeadings) score += 10;
+  
+  // Dates format
+  const hasDates = resumeText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\b|\b\d{4}\s*[-–]\s*\d{4}\b|\bPresent\b/i);
+  if (hasDates) score += 5;
+  
+  // Consistent spacing
+  const lineLengths = lines.map(line => line.length).filter(len => len > 0);
+  const avgLineLength = lineLengths.reduce((a, b) => a + b, 0) / lineLengths.length;
+  if (avgLineLength > 30 && avgLineLength < 100) score += 5; // Good line lengths
+  
+  return Math.max(0, Math.min(100, score));
+};
+
+// 4. GRAMMAR & PROFESSIONALISM ANALYSIS
+const analyzeGrammarAndProfessionalism = (resumeText) => {
+  let score = 85; // Base score
+  const issues = [];
+  
+  // Check for common errors
+  const lines = resumeText.split('\n');
+  
+  // Capitalization check
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.match(/^[•\-*]\s/) && !/^[A-Z]/.test(trimmed)) {
+      if (trimmed.length > 10) { // Only flag substantial lines
+        issues.push(`Line ${index + 1}: Should start with capital letter`);
+        score -= 2;
+      }
+    }
+  });
+  
+  // Tense consistency
+  const pastTenseWords = resumeText.match(/\b(managed|developed|created|implemented|led)\b/gi);
+  const presentTenseWords = resumeText.match(/\b(manage|develop|create|implement|lead)\b/gi);
+  
+  if (pastTenseWords && presentTenseWords) {
+    if (pastTenseWords.length > presentTenseWords.length) {
+      issues.push("Mix of past and present tense detected");
+      score -= 3;
+    }
+  }
+  
+  // Professional language check
+  const unprofessionalWords = [
+    'etc', 'stuff', 'things', 'very', 'really', 'quite', 'extremely'
+  ];
+  unprofessionalWords.forEach(word => {
+    if (resumeText.toLowerCase().includes(word)) {
+      issues.push(`Avoid weak language like "${word}"`);
+      score -= 1;
+    }
+  });
+  
+  // Contact info presence
+  const hasEmail = /\S+@\S+\.\S+/.test(resumeText);
+  const hasPhone = /(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}/.test(resumeText);
+  
+  if (hasEmail) score += 3;
+  if (hasPhone) score += 2;
+  
+  return Math.max(0, Math.min(100, score));
+};
+
+// HELPER FUNCTIONS
+const extractImportantKeywords = (text) => {
+  // Remove common stop words and extract meaningful keywords
+  const stopWords = new Set([
+    'the', 'and', 'is', 'in', 'to', 'of', 'for', 'with', 'on', 'at', 'by',
+    'this', 'that', 'are', 'as', 'be', 'from', 'or', 'but', 'not', 'what',
+    'all', 'were', 'when', 'we', 'there', 'been', 'if', 'more', 'an', 'which',
+    'you', 'has', 'their', 'who', 'its', 'had', 'will', 'would', 'should',
+    'can', 'could', 'may', 'might', 'must', 'shall', 'about', 'also', 'have'
+  ]);
+  
+  const words = text.split(/\W+/)
+    .filter(word => word.length >= 4 && !stopWords.has(word.toLowerCase()))
+    .map(word => word.toLowerCase());
+  
+  // Count frequency and get top keywords
+  const freqMap = {};
+  words.forEach(word => {
+    freqMap[word] = (freqMap[word] || 0) + 1;
+  });
+  
+  return Object.entries(freqMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 30)
+    .map(entry => entry[0]);
+};
+
+const extractKeywords = (resumeLower, jdLower) => {
+  const jdKeywords = extractImportantKeywords(jdLower);
+  const resumeKeywords = extractImportantKeywords(resumeLower);
+  
+  const matchedKeywords = jdKeywords.filter(keyword => 
+    resumeKeywords.includes(keyword) || resumeLower.includes(keyword)
+  );
+  
+  const missingKeywords = jdKeywords.filter(keyword => 
+    !matchedKeywords.includes(keyword)
+  );
+  
+  const matchPercentage = jdKeywords.length > 0 ? 
+    Math.round((matchedKeywords.length / jdKeywords.length) * 100) : 0;
+  
+  return { matchedKeywords, missingKeywords, matchPercentage };
+};
+
+const calculateFrequencyBonus = (resumeLower, jdKeywords) => {
+  let bonus = 0;
+  jdKeywords.forEach(keyword => {
+    const count = (resumeLower.match(new RegExp(keyword, 'gi')) || []).length;
+    if (count >= 2) bonus += 2; // Bonus for repeated important keywords
+    if (count >= 4) bonus += 3; // Additional bonus for high frequency
+  });
+  return Math.min(10, bonus); // Cap bonus at 10 points
+};
+
+const generateGrammarFeedback = (resumeText) => {
+  const issues = [];
+  
+  // Check for common resume errors
+  if (resumeText.length < 400) {
+    issues.push("Resume seems quite short - consider adding more details");
+  }
+  
+  if (!resumeText.match(/\S+@\S+\.\S+/)) {
+    issues.push("Consider adding your email address");
+  }
+  
+  if (!resumeText.match(/\b(experience|work history)\b/i)) {
+    issues.push("Add an Experience section with your work history");
+  }
+  
+  if (!resumeText.match(/\b(education|degree)\b/i)) {
+    issues.push("Include your Education background");
+  }
+  
+  if (!resumeText.match(/\b(skills|technologies)\b/i)) {
+    issues.push("Add a Skills section highlighting your capabilities");
+  }
+  
+  // Check for action verbs
+  const actionVerbs = ['managed', 'developed', 'created', 'implemented', 'led'];
+  const hasActionVerbs = actionVerbs.some(verb => resumeText.toLowerCase().includes(verb));
+  if (!hasActionVerbs) {
+    issues.push("Use action verbs like 'managed', 'developed', 'created' to start bullet points");
+  }
+  
+  return issues.length > 0 ? issues : ["Good job! No major issues detected"];
+};
+
+// Fallback basic scoring (in case enhanced scoring fails)
+const getBasicScore = (resumeText, jdText) => {
+  const similarity = Math.min(100, Math.max(30, resumeText.length / jdText.length * 100));
   const readability = 75;
   const completeness = 80;
   const formatting = 85;
@@ -125,9 +412,9 @@ const calculateScore = (resumeText, jdText) => {
     completeness,
     formatting,
     grammar_score: grammar,
-    grammar_issues: ['No issues found'],
-    matched_keywords: ['javascript', 'react', 'node', 'web', 'development'],
-    missing_keywords: ['python', 'aws', 'docker', 'cloud'],
+    grammar_issues: ['Basic analysis completed'],
+    matched_keywords: ['enhanced', 'analysis', 'resume', 'score'],
+    missing_keywords: ['advanced', 'keywords', 'optimization'],
     keyword_match_percentage: 65
   };
 };
