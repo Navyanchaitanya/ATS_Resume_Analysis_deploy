@@ -23,7 +23,8 @@ import {
   FaPalette,
   FaMagic,
   FaCheck,
-  FaGlobe
+  FaGlobe,
+  FaPrint
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
@@ -45,52 +46,117 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
-// PDF generation utility
+// PDF generation utility using print
 const generatePDF = (element, filename) => {
-  const opt = {
-    margin: 0.5,
-    filename: `${filename}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { 
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      letterRendering: true
-    },
-    jsPDF: { 
-      unit: 'in', 
-      format: 'letter', 
-      orientation: 'portrait' 
-    }
-  };
+  if (!element) {
+    alert('Please enable preview first to generate PDF');
+    return;
+  }
 
-  // Import html2pdf only on client side
-  import('html2pdf.js').then((html2pdf) => {
-    html2pdf.default().set(opt).from(element).save();
-  }).catch(error => {
-    console.error('Error loading PDF library:', error);
-    // Fallback: open in new window for printing
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${filename}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            @media print {
-              body { margin: 0; }
-            }
-          </style>
-        </head>
-        <body>
-          ${element.innerHTML}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-  });
+  const printWindow = window.open('', '_blank');
+  const resumeContent = element.innerHTML;
+  
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${filename}</title>
+      <meta charset="UTF-8">
+      <style>
+        body { 
+          font-family: 'Arial', sans-serif; 
+          margin: 0.5in; 
+          line-height: 1.6; 
+          color: #333;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .resume-container { 
+          max-width: 100%;
+        }
+        .header { 
+          text-align: center; 
+          margin-bottom: 20px; 
+          border-bottom: 2px solid #2563eb; 
+          padding-bottom: 15px; 
+        }
+        .name { 
+          font-size: 24px; 
+          font-weight: bold; 
+          color: #1e40af; 
+          margin-bottom: 5px; 
+        }
+        .contact-info { 
+          color: #6b7280; 
+          margin-bottom: 10px;
+          font-size: 14px;
+        }
+        .section { 
+          margin-bottom: 20px; 
+        }
+        .section-title { 
+          font-size: 16px; 
+          font-weight: bold; 
+          color: #1e40af; 
+          border-bottom: 1px solid #d1d5db; 
+          padding-bottom: 5px; 
+          margin-bottom: 10px; 
+        }
+        .experience-item, .education-item { 
+          margin-bottom: 15px; 
+        }
+        .job-title { 
+          font-weight: bold; 
+          color: #374151; 
+        }
+        .company { 
+          color: #6b7280; 
+          font-style: italic; 
+        }
+        .date { 
+          color: #9ca3af; 
+          font-size: 12px; 
+        }
+        .skills { 
+          display: flex; 
+          flex-wrap: wrap; 
+          gap: 6px; 
+          margin-top: 5px; 
+        }
+        .skill-tag { 
+          background: #dbeafe; 
+          color: #1e40af; 
+          padding: 3px 8px; 
+          border-radius: 12px; 
+          font-size: 12px; 
+        }
+        @media print {
+          body { margin: 0.3in; }
+          .page-break { page-break-before: always; }
+        }
+        @page {
+          margin: 0.5in;
+          size: letter;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="resume-container">
+        ${resumeContent}
+      </div>
+      <script>
+        window.onload = function() {
+          window.print();
+          setTimeout(() => {
+            window.close();
+          }, 500);
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
 };
 
 const ResumeBuilder = ({ token }) => {
@@ -261,11 +327,7 @@ const ResumeBuilder = ({ token }) => {
 
   const downloadResumePDF = () => {
     const element = document.getElementById('resume-preview');
-    if (element) {
-      generatePDF(element, `${resumeData.personal.fullName || 'resume'}`);
-    } else {
-      alert('Please enable preview first to download as PDF');
-    }
+    generatePDF(element, `${resumeData.personal.fullName || 'resume'}`);
   };
 
   const downloadResumeHTML = () => {
@@ -1208,8 +1270,8 @@ const ResumeBuilder = ({ token }) => {
                   onClick={downloadResumePDF}
                   className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <FaFilePdf />
-                  Download as PDF
+                  <FaPrint />
+                  Print as PDF
                 </button>
 
                 <button
