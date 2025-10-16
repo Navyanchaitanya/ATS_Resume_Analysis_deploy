@@ -1,5 +1,5 @@
 // frontend/src/components/ResumeBuilder.jsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaUser, 
@@ -26,7 +26,31 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
-import { debounce } from 'lodash';
+
+// Custom debounce hook without lodash
+const useDebounce = (callback, delay) => {
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const debouncedCallback = useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]);
+
+  return debouncedCallback;
+};
 
 const ResumeBuilder = ({ token }) => {
   const [activeTab, setActiveTab] = useState('personal');
@@ -81,22 +105,6 @@ const ResumeBuilder = ({ token }) => {
       category: 'Creative',
       style: 'creative',
       preview: 'bg-gradient-to-br from-green-50 to-teal-50 border-l-4 border-green-500'
-    },
-    {
-      id: 5,
-      name: 'Minimal',
-      description: 'Clean and minimal design',
-      category: 'Minimal',
-      style: 'minimal',
-      preview: 'bg-gradient-to-br from-orange-50 to-red-50 border-l-4 border-orange-500'
-    },
-    {
-      id: 6,
-      name: 'Technical',
-      description: 'Optimized for technical roles',
-      category: 'Technical',
-      style: 'technical',
-      preview: 'bg-gradient-to-br from-indigo-50 to-purple-50 border-l-4 border-indigo-500'
     }
   ]);
 
@@ -107,15 +115,12 @@ const ResumeBuilder = ({ token }) => {
   const [autoSave, setAutoSave] = useState(false);
   const [lastSave, setLastSave] = useState(null);
 
-  // Debounced input handlers for better performance
-  const debouncedSave = useCallback(
-    debounce((data) => {
-      if (autoSave) {
-        saveResume('Auto-saved Resume', data);
-      }
-    }, 2000),
-    [autoSave]
-  );
+  // Debounced save function
+  const debouncedSave = useDebounce((data) => {
+    if (autoSave && token) {
+      saveResume('Auto-saved Resume', data);
+    }
+  }, 2000);
 
   // Load saved resumes
   useEffect(() => {
@@ -135,7 +140,7 @@ const ResumeBuilder = ({ token }) => {
     }
   };
 
-  // Optimized input handlers with debouncing
+  // Optimized input handlers
   const handleInputChange = useCallback((section, field, value) => {
     setResumeData(prev => {
       const newData = {
@@ -209,7 +214,7 @@ const ResumeBuilder = ({ token }) => {
       await loadSavedResumes();
       setLastSave(new Date());
       if (!dataToSave) {
-        alert('Resume saved successfully!');
+        console.log('Resume saved successfully!');
       }
     } catch (error) {
       console.error('Error saving resume:', error);
@@ -270,32 +275,32 @@ const ResumeBuilder = ({ token }) => {
       `,
       modern: `
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 50px; line-height: 1.7; color: #2d3748; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-          .resume-container { background: white; padding: 50px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #667eea; }
-          .name { font-size: 32px; font-weight: 800; color: #2d3748; margin-bottom: 5px; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 50px; line-height: 1.7; color: #2d3748; background: #f7fafc; }
+          .resume-container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+          .header { text-align: center; margin-bottom: 30px; }
+          .name { font-size: 32px; font-weight: bold; color: #2d3748; margin-bottom: 10px; }
           .contact-info { color: #718096; font-size: 16px; }
-          .section { margin-bottom: 30px; }
-          .section-title { font-size: 20px; font-weight: 700; color: #667eea; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
-          .experience-item, .education-item { margin-bottom: 20px; padding-left: 20px; border-left: 3px solid #cbd5e0; }
-          .job-title { font-weight: 600; color: #2d3748; font-size: 18px; }
+          .section { margin-bottom: 25px; }
+          .section-title { font-size: 20px; font-weight: 600; color: #4a5568; border-left: 4px solid #667eea; padding-left: 10px; margin-bottom: 15px; }
+          .experience-item, .education-item { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+          .job-title { font-weight: 600; color: #2d3748; }
           .company { color: #667eea; font-weight: 500; }
           .date { color: #a0aec0; font-size: 14px; margin-top: 5px; }
-          .skills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-          .skill-tag { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 15px; border-radius: 25px; font-size: 14px; font-weight: 500; }
+          .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+          .skill-tag { background: #667eea; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
         </style>
       `,
       executive: `
         <style>
-          body { font-family: 'Georgia', serif; margin: 60px; line-height: 1.8; color: #2d3748; background: #f8f9fa; }
-          .resume-container { background: white; padding: 60px; border: 1px solid #e2e8f0; }
-          .header { text-align: center; margin-bottom: 50px; }
-          .name { font-size: 36px; font-weight: 300; color: #2d3748; letter-spacing: 2px; margin-bottom: 10px; }
-          .contact-info { color: #718096; font-size: 16px; letter-spacing: 0.5px; }
-          .section { margin-bottom: 35px; }
-          .section-title { font-size: 18px; font-weight: 600; color: #2d3748; border-bottom: 2px solid #cbd5e0; padding-bottom: 8px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+          body { font-family: 'Georgia', serif; margin: 50px; line-height: 1.8; color: #2d3748; background: #f8f9fa; }
+          .resume-container { background: white; padding: 50px; border: 1px solid #e2e8f0; }
+          .header { text-align: center; margin-bottom: 40px; }
+          .name { font-size: 36px; font-weight: 300; color: #2d3748; margin-bottom: 10px; letter-spacing: 1px; }
+          .contact-info { color: #718096; font-size: 16px; }
+          .section { margin-bottom: 30px; }
+          .section-title { font-size: 18px; font-weight: 600; color: #2d3748; border-bottom: 2px solid #cbd5e0; padding-bottom: 8px; margin-bottom: 15px; }
           .experience-item, .education-item { margin-bottom: 25px; }
-          .job-title { font-weight: 600; color: #2d3748; font-size: 18px; }
+          .job-title { font-weight: 600; color: #2d3748; }
           .company { color: #718096; font-style: italic; }
           .date { color: #a0aec0; font-size: 14px; margin-top: 5px; }
           .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -305,53 +310,19 @@ const ResumeBuilder = ({ token }) => {
       creative: `
         <style>
           body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 40px; line-height: 1.6; color: #2d3748; background: #f7fafc; }
-          .resume-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+          .resume-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
           .header { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 40px; }
-          .name { font-size: 42px; font-weight: 900; color: #2d3748; margin-bottom: 10px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+          .name { font-size: 36px; font-weight: 800; color: #2d3748; margin-bottom: 10px; }
           .contact-info { color: #718096; font-size: 16px; }
           .section { margin-bottom: 30px; }
-          .section-title { font-size: 24px; font-weight: 800; color: #2d3748; margin-bottom: 15px; position: relative; }
-          .section-title:after { content: ''; position: absolute; bottom: -5px; left: 0; width: 50px; height: 3px; background: linear-gradient(135deg, #667eea, #764ba2); }
+          .section-title { font-size: 22px; font-weight: 700; color: #2d3748; margin-bottom: 15px; position: relative; }
+          .section-title:after { content: ''; position: absolute; bottom: -5px; left: 0; width: 50px; height: 3px; background: #667eea; }
           .experience-item, .education-item { margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
-          .job-title { font-weight: 700; color: #2d3748; font-size: 18px; }
-          .company { color: #667eea; font-weight: 600; }
+          .job-title { font-weight: 600; color: #2d3748; }
+          .company { color: #667eea; font-weight: 500; }
           .date { color: #a0aec0; font-size: 14px; margin-top: 5px; }
-          .skills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-          .skill-tag { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
-        </style>
-      `,
-      minimal: `
-        <style>
-          body { font-family: 'Inter', sans-serif; margin: 50px; line-height: 1.6; color: #374151; background: #f9fafb; }
-          .resume-container { max-width: 800px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 40px; }
-          .name { font-size: 32px; font-weight: 300; color: #111827; margin-bottom: 8px; letter-spacing: -0.5px; }
-          .contact-info { color: #6b7280; font-size: 16px; }
-          .section { margin-bottom: 30px; }
-          .section-title { font-size: 16px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-          .experience-item, .education-item { margin-bottom: 20px; }
-          .job-title { font-weight: 500; color: #111827; }
-          .company { color: #6b7280; }
-          .date { color: #9ca3af; font-size: 14px; margin-top: 2px; }
-          .skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-          .skill-tag { background: #f3f4f6; color: #374151; padding: 4px 10px; border-radius: 6px; font-size: 13px; }
-        </style>
-      `,
-      technical: `
-        <style>
-          body { font-family: 'SF Mono', 'Monaco', 'Consolas', monospace; margin: 40px; line-height: 1.5; color: #24292e; background: #0d1117; color: #c9d1d9; }
-          .resume-container { background: #161b22; padding: 40px; border: 1px solid #30363d; border-radius: 6px; }
-          .header { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #30363d; }
-          .name { font-size: 24px; font-weight: 600; color: #58a6ff; margin-bottom: 5px; }
-          .contact-info { color: #8b949e; font-size: 14px; }
-          .section { margin-bottom: 25px; }
-          .section-title { font-size: 16px; font-weight: 600; color: #58a6ff; margin-bottom: 10px; }
-          .experience-item, .education-item { margin-bottom: 15px; padding: 15px; background: #0d1117; border: 1px solid #21262d; border-radius: 6px; }
-          .job-title { font-weight: 600; color: #c9d1d9; }
-          .company { color: #8b949e; }
-          .date { color: #484f58; font-size: 12px; margin-top: 5px; }
-          .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-          .skill-tag { background: #21262d; color: #58a6ff; padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid #30363d; }
+          .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+          .skill-tag { background: #667eea; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
         </style>
       `
     };
@@ -366,7 +337,7 @@ const ResumeBuilder = ({ token }) => {
       </head>
       <body>
         <div class="resume-container">
-          ${generateResumeContent(templateStyle)}
+          ${generateResumeContent()}
         </div>
       </body>
       </html>
@@ -375,8 +346,8 @@ const ResumeBuilder = ({ token }) => {
     return baseHTML;
   };
 
-  const generateResumeContent = (templateStyle) => {
-    const { personal, summary, experience, education, skills, projects, certifications, languages } = resumeData;
+  const generateResumeContent = () => {
+    const { personal, summary, experience, education, skills, projects } = resumeData;
     
     return `
       <div class="header">
@@ -453,7 +424,7 @@ const ResumeBuilder = ({ token }) => {
     `;
   };
 
-  // Memoized components for better performance
+  // Memoized components
   const FormSection = React.memo(({ title, icon, children }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -487,25 +458,24 @@ const ResumeBuilder = ({ token }) => {
   ));
 
   const TemplateSelector = React.memo(({ selected, onSelect }) => (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 gap-3">
       {templates.map(template => (
         <motion.div
           key={template.id}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onSelect(template.id)}
-          className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+          className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
             selected === template.id
               ? 'border-blue-500 bg-blue-50 shadow-md'
               : 'border-gray-200 hover:border-gray-300'
           }`}
         >
-          <div className={`w-full h-24 rounded-lg mb-3 ${template.preview} flex items-center justify-center`}>
-            <FaFilePdf className="text-2xl opacity-60" />
+          <div className={`w-full h-16 rounded mb-2 ${template.preview} flex items-center justify-center`}>
+            <FaFilePdf className="text-lg opacity-60" />
           </div>
-          <h4 className="font-semibold text-gray-800 text-sm">{template.name}</h4>
-          <p className="text-gray-600 text-xs mt-1">{template.description}</p>
-          <span className="text-blue-600 text-xs font-medium">{template.category}</span>
+          <h4 className="font-semibold text-gray-800 text-xs">{template.name}</h4>
+          <p className="text-gray-600 text-xs mt-1 line-clamp-2">{template.description}</p>
         </motion.div>
       ))}
     </div>
@@ -517,87 +487,65 @@ const ResumeBuilder = ({ token }) => {
     { id: 'experience', label: 'Experience', icon: <FaBriefcase /> },
     { id: 'education', label: 'Education', icon: <FaGraduationCap /> },
     { id: 'skills', label: 'Skills', icon: <FaTools /> },
-    { id: 'projects', label: 'Projects', icon: <FaAward /> },
-    { id: 'certifications', label: 'Certifications', icon: <FaAward /> },
-    { id: 'languages', label: 'Languages', icon: <FaLanguage /> }
+    { id: 'projects', label: 'Projects', icon: <FaAward /> }
   ], []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-6"
         >
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              AI Resume Builder
+              Resume Builder
             </span>
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Create professional, ATS-optimized resumes with multiple templates. Real-time preview and auto-save included.
+          <p className="text-gray-600 text-sm">
+            Create professional resumes with multiple templates
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar - Templates & Settings */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Template Selection */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Left Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
             <FormSection title="Templates" icon={<FaPalette />}>
               <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
             </FormSection>
 
-            {/* Auto-save Settings */}
             <FormSection title="Settings" icon={<FaMagic />}>
-              <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={autoSave}
                     onChange={(e) => setAutoSave(e.target.checked)}
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
-                  <span className="text-gray-700">Enable Auto-save</span>
+                  <span className="text-gray-700 text-sm">Auto-save</span>
                 </label>
                 {lastSave && (
-                  <p className="text-sm text-green-600 flex items-center gap-2">
-                    <FaCheck />
-                    Last saved: {lastSave.toLocaleTimeString()}
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <FaCheck className="text-xs" />
+                    Saved: {lastSave.toLocaleTimeString()}
                   </p>
                 )}
               </div>
             </FormSection>
-
-            {/* Saved Resumes */}
-            {savedResumes.length > 0 && (
-              <FormSection title="Saved Resumes" icon={<FaSave />}>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {savedResumes.map(resume => (
-                    <div key={resume.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-                      <h4 className="font-semibold text-gray-800 text-sm">{resume.name}</h4>
-                      <p className="text-gray-600 text-xs truncate">{resume.preview}</p>
-                      <p className="text-gray-500 text-xs">
-                        {new Date(resume.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </FormSection>
-            )}
           </div>
 
-          {/* Main Content - Form Builder */}
+          {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Navigation Tabs */}
-            <div className="bg-white rounded-xl p-2 shadow-lg mb-6">
+            <div className="bg-white rounded-xl p-2 shadow-lg mb-4">
               <div className="flex flex-wrap gap-1">
                 {navigationTabs.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors text-xs ${
                       activeTab === tab.id
                         ? 'bg-blue-500 text-white'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -610,7 +558,6 @@ const ResumeBuilder = ({ token }) => {
               </div>
             </div>
 
-            {/* Form Content */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -618,70 +565,50 @@ const ResumeBuilder = ({ token }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-6"
+                className="space-y-4"
               >
                 {/* Personal Information */}
                 {activeTab === 'personal' && (
                   <FormSection title="Personal Information" icon={<FaUser />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-gray-700 mb-2 text-sm">Full Name *</label>
+                        <label className="block text-gray-700 mb-1 text-xs">Full Name</label>
                         <input
                           type="text"
                           value={resumeData.personal.fullName}
                           onChange={(e) => handleInputChange('personal', 'fullName', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder="John Doe"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2 text-sm">Email *</label>
+                        <label className="block text-gray-700 mb-1 text-xs">Email</label>
                         <input
                           type="email"
                           value={resumeData.personal.email}
                           onChange={(e) => handleInputChange('personal', 'email', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder="john@example.com"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2 text-sm">Phone</label>
+                        <label className="block text-gray-700 mb-1 text-xs">Phone</label>
                         <input
                           type="tel"
                           value={resumeData.personal.phone}
                           onChange={(e) => handleInputChange('personal', 'phone', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder="+1 (555) 123-4567"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2 text-sm">Location</label>
+                        <label className="block text-gray-700 mb-1 text-xs">Location</label>
                         <input
                           type="text"
                           value={resumeData.personal.location}
                           onChange={(e) => handleInputChange('personal', 'location', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
                           placeholder="San Francisco, CA"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 mb-2 text-sm">LinkedIn</label>
-                        <input
-                          type="url"
-                          value={resumeData.personal.linkedin}
-                          onChange={(e) => handleInputChange('personal', 'linkedin', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          placeholder="https://linkedin.com/in/username"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 mb-2 text-sm">GitHub</label>
-                        <input
-                          type="url"
-                          value={resumeData.personal.github}
-                          onChange={(e) => handleInputChange('personal', 'github', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          placeholder="https://github.com/username"
                         />
                       </div>
                     </div>
@@ -694,11 +621,11 @@ const ResumeBuilder = ({ token }) => {
                     <textarea
                       value={resumeData.summary}
                       onChange={(e) => handleSummaryChange(e.target.value)}
-                      rows="6"
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                      placeholder="Experienced professional with 5+ years in the industry. Skilled in leadership, project management, and strategic planning. Proven track record of delivering successful projects and driving business growth."
+                      rows="4"
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                      placeholder="Describe your professional background and skills..."
                     />
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-xs text-gray-500 mt-1">
                       {resumeData.summary.length}/500 characters
                     </p>
                   </FormSection>
@@ -710,7 +637,7 @@ const ResumeBuilder = ({ token }) => {
                     <ArrayInput
                       section="experience"
                       items={resumeData.experience}
-                      emptyMessage="No work experience added yet. Add your first position."
+                      emptyMessage="No work experience added yet."
                       onAdd={() => handleArrayAdd('experience', {
                         position: '',
                         company: '',
@@ -721,69 +648,42 @@ const ResumeBuilder = ({ token }) => {
                         current: false
                       })}
                       renderItem={(exp, index) => (
-                        <div key={exp.id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div key={exp.id} className="border border-gray-200 rounded p-3">
+                          <div className="grid grid-cols-1 gap-2 mb-2">
                             <input
                               type="text"
-                              placeholder="Position *"
+                              placeholder="Position"
                               value={exp.position}
                               onChange={(e) => handleArrayUpdate('experience', exp.id, { position: e.target.value })}
-                              className="border border-gray-300 rounded px-3 py-2 text-sm"
+                              className="border border-gray-300 rounded px-2 py-1 text-sm"
                             />
                             <input
                               type="text"
-                              placeholder="Company *"
+                              placeholder="Company"
                               value={exp.company}
                               onChange={(e) => handleArrayUpdate('experience', exp.id, { company: e.target.value })}
-                              className="border border-gray-300 rounded px-3 py-2 text-sm"
+                              className="border border-gray-300 rounded px-2 py-1 text-sm"
                             />
-                            <input
-                              type="text"
-                              placeholder="Location"
-                              value={exp.location}
-                              onChange={(e) => handleArrayUpdate('experience', exp.id, { location: e.target.value })}
-                              className="border border-gray-300 rounded px-3 py-2 text-sm"
-                            />
-                            <div className="flex gap-2">
-                              <input
-                                type="month"
-                                placeholder="Start Date"
-                                value={exp.startDate}
-                                onChange={(e) => handleArrayUpdate('experience', exp.id, { startDate: e.target.value })}
-                                className="border border-gray-300 rounded px-3 py-2 flex-1 text-sm"
-                              />
-                              <input
-                                type="month"
-                                placeholder="End Date"
-                                value={exp.endDate}
-                                onChange={(e) => handleArrayUpdate('experience', exp.id, { endDate: e.target.value })}
-                                className="border border-gray-300 rounded px-3 py-2 flex-1 text-sm"
-                                disabled={exp.current}
-                              />
-                            </div>
                           </div>
                           <textarea
-                            placeholder="Description of your responsibilities and achievements..."
+                            placeholder="Description"
                             value={exp.description}
                             onChange={(e) => handleArrayUpdate('experience', exp.id, { description: e.target.value })}
-                            rows="3"
-                            className="w-full border border-gray-300 rounded px-3 py-2 mb-2 resize-none text-sm"
+                            rows="2"
+                            className="w-full border border-gray-300 rounded px-2 py-1 mb-2 resize-none text-sm"
                           />
                           <div className="flex justify-between items-center">
-                            <label className="flex items-center gap-2 text-sm">
+                            <label className="flex items-center gap-1 text-xs">
                               <input
                                 type="checkbox"
                                 checked={exp.current}
-                                onChange={(e) => handleArrayUpdate('experience', exp.id, { 
-                                  current: e.target.checked,
-                                  endDate: e.target.checked ? '' : exp.endDate
-                                })}
+                                onChange={(e) => handleArrayUpdate('experience', exp.id, { current: e.target.checked })}
                               />
-                              I currently work here
+                              Current job
                             </label>
                             <button
                               onClick={() => handleArrayRemove('experience', exp.id)}
-                              className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm"
+                              className="text-red-500 hover:text-red-700 flex items-center gap-1 text-xs"
                             >
                               <FaTrash />
                               Remove
@@ -795,31 +695,28 @@ const ResumeBuilder = ({ token }) => {
                   </FormSection>
                 )}
 
-                {/* Add similar optimized sections for other tabs */}
-                {/* Education, Skills, Projects, etc. would follow the same pattern */}
+                {/* Add other sections similarly */}
                 
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* Right Sidebar - Preview & Actions */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Resume Preview */}
-            <FormSection title="Live Preview" icon={<FaEye />}>
-              <div className="bg-white border-2 border-gray-200 rounded-lg p-4 min-h-[400px] max-h-[500px] overflow-y-auto">
+          {/* Right Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            <FormSection title="Preview" icon={<FaEye />}>
+              <div className="bg-white border border-gray-200 rounded p-3 min-h-[300px] max-h-[400px] overflow-y-auto">
                 {previewMode ? (
                   <div 
-                    className="prose max-w-none"
+                    className="prose max-w-none text-xs"
                     dangerouslySetInnerHTML={{ __html: generateResumeHTML() }}
                   />
                 ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    <FaEye className="text-4xl mx-auto mb-4 text-gray-300" />
-                    <p className="mb-2">Preview will appear here</p>
-                    <p className="text-sm text-gray-400 mb-4">Select a template and start building</p>
+                  <div className="text-center text-gray-500 py-4">
+                    <FaEye className="text-2xl mx-auto mb-2 text-gray-300" />
+                    <p className="text-xs">Preview will appear here</p>
                     <button
                       onClick={() => setPreviewMode(true)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                      className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition-colors mt-2"
                     >
                       Show Preview
                     </button>
@@ -828,13 +725,12 @@ const ResumeBuilder = ({ token }) => {
               </div>
             </FormSection>
 
-            {/* Action Buttons */}
             <FormSection title="Actions" icon={<FaDownload />}>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <button
                   onClick={() => saveResume(prompt('Enter resume name:') || 'My Resume')}
                   disabled={loading}
-                  className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2 text-sm"
+                  className="w-full bg-green-500 text-white py-2 rounded text-sm hover:bg-green-600 disabled:bg-gray-400 transition-colors flex items-center justify-center gap-1"
                 >
                   <FaSave />
                   {loading ? 'Saving...' : 'Save Resume'}
@@ -842,58 +738,19 @@ const ResumeBuilder = ({ token }) => {
                 
                 <button
                   onClick={downloadResume}
-                  className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm"
+                  className="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-1"
                 >
                   <FaDownload />
-                  Download HTML
+                  Download
                 </button>
 
                 <button
                   onClick={() => setPreviewMode(!previewMode)}
-                  className="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 text-sm"
+                  className="w-full bg-purple-500 text-white py-2 rounded text-sm hover:bg-purple-600 transition-colors flex items-center justify-center gap-1"
                 >
                   <FaEye />
-                  {previewMode ? 'Hide Preview' : 'Show Preview'}
+                  {previewMode ? 'Hide' : 'Preview'}
                 </button>
-
-                <button
-                  onClick={() => {
-                    if (confirm('Are you sure you want to clear all data?')) {
-                      setResumeData({
-                        personal: { fullName: '', email: '', phone: '', location: '', linkedin: '', github: '', portfolio: '' },
-                        summary: '',
-                        experience: [],
-                        education: [],
-                        skills: [],
-                        projects: [],
-                        certifications: [],
-                        languages: []
-                      });
-                    }
-                  }}
-                  className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2 text-sm"
-                >
-                  <FaTrash />
-                  Clear All
-                </button>
-              </div>
-            </FormSection>
-
-            {/* Template Preview */}
-            <FormSection title="Template Preview" icon={<FaPalette />}>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Selected:</span>
-                  <span className="font-semibold text-blue-600">
-                    {templates.find(t => t.id === selectedTemplate)?.name}
-                  </span>
-                </div>
-                <div className={`p-3 rounded-lg ${templates.find(t => t.id === selectedTemplate)?.preview}`}>
-                  <div className="text-center">
-                    <div className="font-semibold text-gray-800">Template Preview</div>
-                    <div className="text-xs text-gray-600 mt-1">Live styling applied</div>
-                  </div>
-                </div>
               </div>
             </FormSection>
           </div>
