@@ -18,13 +18,12 @@ import {
   FaSave,
   FaPlus,
   FaTrash,
-  FaEdit,
   FaFilePdf,
   FaPalette,
+  FaPrint,
   FaMagic,
-  FaCheck,
-  FaGlobe,
-  FaPrint
+  FaStar,
+  FaRocket
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
@@ -142,6 +141,33 @@ const generatePDF = (element, filename) => {
   printWindow.document.close();
 };
 
+// Optimized input components to prevent re-renders
+const InputField = React.memo(({ label, value, onChange, type = 'text', placeholder, className = '' }) => (
+  <div className={className}>
+    <label className="block text-gray-700 mb-2 text-sm font-semibold">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 bg-white shadow-sm"
+      placeholder={placeholder}
+    />
+  </div>
+));
+
+const TextAreaField = React.memo(({ label, value, onChange, rows = 4, placeholder, className = '' }) => (
+  <div className={className}>
+    <label className="block text-gray-700 mb-2 text-sm font-semibold">{label}</label>
+    <textarea
+      value={value}
+      onChange={onChange}
+      rows={rows}
+      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none transition-all duration-200 bg-white shadow-sm"
+      placeholder={placeholder}
+    />
+  </div>
+));
+
 const ResumeBuilder = ({ token }) => {
   const [activeTab, setActiveTab] = useState('personal');
   const [resumeData, setResumeData] = useState({
@@ -170,7 +196,8 @@ const ResumeBuilder = ({ token }) => {
       description: 'Clean and professional ATS-friendly template',
       category: 'ATS Optimized',
       style: 'professional',
-      preview: 'bg-gradient-to-br from-blue-50 to-cyan-50 border-l-4 border-blue-500'
+      preview: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+      color: 'from-blue-500 to-cyan-500'
     },
     {
       id: 2,
@@ -178,7 +205,8 @@ const ResumeBuilder = ({ token }) => {
       description: 'Contemporary design with visual appeal',
       category: 'Modern',
       style: 'modern',
-      preview: 'bg-gradient-to-br from-purple-50 to-pink-50 border-l-4 border-purple-500'
+      preview: 'bg-gradient-to-br from-purple-500 to-pink-500',
+      color: 'from-purple-500 to-pink-500'
     },
     {
       id: 3,
@@ -186,7 +214,8 @@ const ResumeBuilder = ({ token }) => {
       description: 'Sophisticated layout for senior roles',
       category: 'Executive',
       style: 'executive',
-      preview: 'bg-gradient-to-br from-gray-50 to-blue-50 border-l-4 border-gray-500'
+      preview: 'bg-gradient-to-br from-gray-600 to-blue-600',
+      color: 'from-gray-600 to-blue-600'
     },
     {
       id: 4,
@@ -194,7 +223,8 @@ const ResumeBuilder = ({ token }) => {
       description: 'For design and creative roles',
       category: 'Creative',
       style: 'creative',
-      preview: 'bg-gradient-to-br from-green-50 to-teal-50 border-l-4 border-green-500'
+      preview: 'bg-gradient-to-br from-green-500 to-teal-500',
+      color: 'from-green-500 to-teal-500'
     }
   ]);
 
@@ -222,7 +252,7 @@ const ResumeBuilder = ({ token }) => {
     }
   };
 
-  // Simple input handlers without auto-save
+  // Stable input handlers with useCallback
   const handleInputChange = useCallback((section, field, value) => {
     setResumeData(prev => ({
       ...prev,
@@ -244,11 +274,11 @@ const ResumeBuilder = ({ token }) => {
     }));
   }, []);
 
-  const handleArrayUpdate = useCallback((section, id, updates) => {
+  const handleArrayUpdate = useCallback((section, id, field, value) => {
     setResumeData(prev => ({
       ...prev,
       [section]: prev[section].map(item => 
-        item.id === id ? { ...item, ...updates } : item
+        item.id === id ? { ...item, [field]: value } : item
       )
     }));
   }, []);
@@ -515,10 +545,12 @@ const ResumeBuilder = ({ token }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl p-6 shadow-lg border border-gray-200"
+      className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20"
     >
-      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        {icon}
+      <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+          {icon}
+        </div>
         {title}
       </h3>
       {children}
@@ -528,71 +560,55 @@ const ResumeBuilder = ({ token }) => {
   const ArrayInput = React.memo(({ section, items, renderItem, emptyMessage, onAdd }) => (
     <div className="space-y-4">
       {items.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">{emptyMessage}</p>
+        <div className="text-center py-8">
+          <div className="text-gray-400 text-4xl mb-3">📝</div>
+          <p className="text-gray-500 text-sm">{emptyMessage}</p>
+        </div>
       ) : (
         items.map((item, index) => renderItem(item, index))
       )}
       <button
         type="button"
         onClick={onAdd}
-        className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
       >
-        <FaPlus />
-        Add New
+        <FaPlus className="text-lg" />
+        <span className="font-semibold">Add New</span>
       </button>
     </div>
   ));
 
   const TemplateSelector = React.memo(({ selected, onSelect }) => (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-4">
       {templates.map(template => (
         <motion.div
           key={template.id}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onSelect(template.id)}
-          className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+          className={`relative rounded-xl border-2 cursor-pointer transition-all duration-300 overflow-hidden group ${
             selected === template.id
-              ? 'border-blue-500 bg-blue-50 shadow-md'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-blue-500 shadow-2xl shadow-blue-500/20'
+              : 'border-gray-200 hover:border-gray-300 shadow-lg'
           }`}
         >
-          <div className={`w-full h-16 rounded mb-2 ${template.preview} flex items-center justify-center`}>
-            <FaFilePdf className="text-lg opacity-60" />
+          <div className={`w-full h-20 ${template.preview} flex items-center justify-center relative`}>
+            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
+            <FaFilePdf className="text-white text-2xl z-10" />
           </div>
-          <h4 className="font-semibold text-gray-800 text-xs">{template.name}</h4>
-          <p className="text-gray-600 text-xs mt-1 line-clamp-2">{template.description}</p>
+          <div className="p-3 bg-white">
+            <h4 className="font-bold text-gray-800 text-sm mb-1">{template.name}</h4>
+            <p className="text-gray-600 text-xs">{template.description}</p>
+          </div>
+          {selected === template.id && (
+            <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+              <FaStar className="text-white text-xs" />
+            </div>
+          )}
         </motion.div>
       ))}
     </div>
   ));
-
-  // Input field component for consistent styling
-  const InputField = ({ label, value, onChange, type = 'text', placeholder, className = '' }) => (
-    <div className={className}>
-      <label className="block text-gray-700 mb-1 text-xs font-medium">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200"
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  const TextAreaField = ({ label, value, onChange, rows = 4, placeholder, className = '' }) => (
-    <div className={className}>
-      <label className="block text-gray-700 mb-1 text-xs font-medium">{label}</label>
-      <textarea
-        value={value}
-        onChange={onChange}
-        rows={rows}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none transition-all duration-200"
-        placeholder={placeholder}
-      />
-    </div>
-  );
 
   const navigationTabs = useMemo(() => [
     { id: 'personal', label: 'Personal', icon: <FaUser /> },
@@ -606,39 +622,52 @@ const ResumeBuilder = ({ token }) => {
   ], []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+      {/* Animated Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Professional Resume Builder
-            </span>
+          <div className="inline-flex items-center gap-3 mb-4 bg-white/10 backdrop-blur-lg rounded-full px-6 py-3 border border-white/20">
+            <FaRocket className="text-yellow-400 text-xl" />
+            <span className="text-white text-sm font-semibold">AI-Powered Resume Builder</span>
+          </div>
+          <h1 className="text-5xl font-bold text-white mb-4">
+            Create Your Perfect
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent"> Resume</span>
           </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Create stunning, professional resumes that stand out. Download as PDF instantly.
+          <p className="text-gray-300 text-xl max-w-3xl mx-auto leading-relaxed">
+            Build professional, ATS-friendly resumes that land interviews. 
+            <span className="text-cyan-300"> Download instantly as PDF.</span>
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Left Sidebar - Templates & Settings */}
-          <div className="xl:col-span-1 space-y-6">
+          <div className="xl:col-span-1 space-y-8">
             <FormSection title="🎨 Templates" icon={<FaPalette />}>
               <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
             </FormSection>
 
-            <FormSection title="⚙️ Settings" icon={<FaMagic />}>
+            <FormSection title="⚡ Status" icon={<FaMagic />}>
               <div className="space-y-4">
                 {lastSave && (
-                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                    <FaCheck className="text-xs" />
+                  <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 px-4 py-3 rounded-xl border border-green-500/20">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                     <span>Last saved: {lastSave.toLocaleTimeString()}</span>
                   </div>
                 )}
+                <div className="flex items-center gap-3 text-sm text-blue-400 bg-blue-500/10 px-4 py-3 rounded-xl border border-blue-500/20">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Real-time Preview</span>
+                </div>
               </div>
             </FormSection>
           </div>
@@ -646,16 +675,20 @@ const ResumeBuilder = ({ token }) => {
           {/* Main Content - Form Sections */}
           <div className="xl:col-span-2">
             {/* Navigation Tabs */}
-            <div className="bg-white rounded-2xl p-2 shadow-lg mb-6 sticky top-4 z-10">
+            <motion.div 
+              className="bg-white/10 backdrop-blur-lg rounded-2xl p-2 mb-8 sticky top-4 z-20 border border-white/20 shadow-2xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
               <div className="flex flex-wrap gap-1">
                 {navigationTabs.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
+                    className={`flex items-center gap-3 px-5 py-4 rounded-xl transition-all duration-300 text-sm font-semibold ${
                       activeTab === tab.id
                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
                     }`}
                   >
                     {tab.icon}
@@ -663,7 +696,7 @@ const ResumeBuilder = ({ token }) => {
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* Form Content */}
             <AnimatePresence mode="wait">
@@ -673,12 +706,12 @@ const ResumeBuilder = ({ token }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-6"
+                className="space-y-8"
               >
                 {/* Personal Information */}
                 {activeTab === 'personal' && (
                   <FormSection title="👤 Personal Information" icon={<FaUser />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <InputField
                         label="Full Name"
                         value={resumeData.personal.fullName}
@@ -738,9 +771,14 @@ const ResumeBuilder = ({ token }) => {
                       rows={6}
                       placeholder="Describe your professional background, key skills, and career objectives..."
                     />
-                    <p className="text-xs text-gray-500 mt-2">
-                      {resumeData.summary.length}/500 characters • Write a compelling summary that highlights your expertise
-                    </p>
+                    <div className="flex justify-between items-center mt-4">
+                      <p className="text-xs text-gray-500">
+                        {resumeData.summary.length}/500 characters
+                      </p>
+                      <p className="text-xs text-blue-500 font-semibold">
+                        Write a compelling summary that highlights your expertise
+                      </p>
+                    </div>
                   </FormSection>
                 )}
 
@@ -765,40 +803,40 @@ const ResumeBuilder = ({ token }) => {
                           key={exp.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                          className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputField
                               label="Position"
                               value={exp.position}
-                              onChange={(e) => handleArrayUpdate('experience', exp.id, { position: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('experience', exp.id, 'position', e.target.value)}
                               placeholder="e.g., Senior Software Engineer"
                             />
                             <InputField
                               label="Company"
                               value={exp.company}
-                              onChange={(e) => handleArrayUpdate('experience', exp.id, { company: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('experience', exp.id, 'company', e.target.value)}
                               placeholder="e.g., Google Inc."
                             />
                             <InputField
                               label="Location"
                               value={exp.location}
-                              onChange={(e) => handleArrayUpdate('experience', exp.id, { location: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('experience', exp.id, 'location', e.target.value)}
                               placeholder="e.g., Remote, San Francisco, CA"
                             />
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-3">
                               <InputField
                                 label="Start Date"
                                 type="month"
                                 value={exp.startDate}
-                                onChange={(e) => handleArrayUpdate('experience', exp.id, { startDate: e.target.value })}
+                                onChange={(e) => handleArrayUpdate('experience', exp.id, 'startDate', e.target.value)}
                               />
                               {!exp.current && (
                                 <InputField
                                   label="End Date"
                                   type="month"
                                   value={exp.endDate}
-                                  onChange={(e) => handleArrayUpdate('experience', exp.id, { endDate: e.target.value })}
+                                  onChange={(e) => handleArrayUpdate('experience', exp.id, 'endDate', e.target.value)}
                                 />
                               )}
                             </div>
@@ -807,26 +845,26 @@ const ResumeBuilder = ({ token }) => {
                           <TextAreaField
                             label="Description"
                             value={exp.description}
-                            onChange={(e) => handleArrayUpdate('experience', exp.id, { description: e.target.value })}
+                            onChange={(e) => handleArrayUpdate('experience', exp.id, 'description', e.target.value)}
                             rows={3}
                             placeholder="Describe your responsibilities and achievements..."
                           />
                           
-                          <div className="flex justify-between items-center mt-3">
-                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <div className="flex justify-between items-center mt-4">
+                            <label className="flex items-center gap-3 text-sm cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={exp.current}
-                                onChange={(e) => handleArrayUpdate('experience', exp.id, { current: e.target.checked })}
+                                onChange={(e) => handleArrayUpdate('experience', exp.id, 'current', e.target.checked)}
                                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                               />
-                              <span className="text-gray-700">I currently work here</span>
+                              <span className="text-gray-700 font-medium">I currently work here</span>
                             </label>
                             <button
                               onClick={() => handleArrayRemove('experience', exp.id)}
                               className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className="text-sm" />
                               Remove
                             </button>
                           </div>
@@ -857,40 +895,40 @@ const ResumeBuilder = ({ token }) => {
                           key={edu.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                          className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputField
                               label="Degree"
                               value={edu.degree}
-                              onChange={(e) => handleArrayUpdate('education', edu.id, { degree: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('education', edu.id, 'degree', e.target.value)}
                               placeholder="e.g., Bachelor of Science in Computer Science"
                             />
                             <InputField
                               label="Institution"
                               value={edu.institution}
-                              onChange={(e) => handleArrayUpdate('education', edu.id, { institution: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('education', edu.id, 'institution', e.target.value)}
                               placeholder="e.g., Stanford University"
                             />
                             <InputField
                               label="Location"
                               value={edu.location}
-                              onChange={(e) => handleArrayUpdate('education', edu.id, { location: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('education', edu.id, 'location', e.target.value)}
                               placeholder="e.g., Stanford, CA"
                             />
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-3">
                               <InputField
                                 label="Start Date"
                                 type="month"
                                 value={edu.startDate}
-                                onChange={(e) => handleArrayUpdate('education', edu.id, { startDate: e.target.value })}
+                                onChange={(e) => handleArrayUpdate('education', edu.id, 'startDate', e.target.value)}
                               />
                               {!edu.current && (
                                 <InputField
                                   label="End Date"
                                   type="month"
                                   value={edu.endDate}
-                                  onChange={(e) => handleArrayUpdate('education', edu.id, { endDate: e.target.value })}
+                                  onChange={(e) => handleArrayUpdate('education', edu.id, 'endDate', e.target.value)}
                                 />
                               )}
                             </div>
@@ -899,26 +937,26 @@ const ResumeBuilder = ({ token }) => {
                           <TextAreaField
                             label="Description"
                             value={edu.description}
-                            onChange={(e) => handleArrayUpdate('education', edu.id, { description: e.target.value })}
+                            onChange={(e) => handleArrayUpdate('education', edu.id, 'description', e.target.value)}
                             rows={2}
                             placeholder="Relevant coursework, achievements, or honors..."
                           />
                           
-                          <div className="flex justify-between items-center mt-3">
-                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <div className="flex justify-between items-center mt-4">
+                            <label className="flex items-center gap-3 text-sm cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={edu.current}
-                                onChange={(e) => handleArrayUpdate('education', edu.id, { current: e.target.checked })}
+                                onChange={(e) => handleArrayUpdate('education', edu.id, 'current', e.target.checked)}
                                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                               />
-                              <span className="text-gray-700">Currently studying here</span>
+                              <span className="text-gray-700 font-medium">Currently studying here</span>
                             </label>
                             <button
                               onClick={() => handleArrayRemove('education', edu.id)}
                               className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className="text-sm" />
                               Remove
                             </button>
                           </div>
@@ -945,34 +983,34 @@ const ResumeBuilder = ({ token }) => {
                           key={skill.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                          className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <InputField
                               label="Skill Name"
                               value={skill.name}
-                              onChange={(e) => handleArrayUpdate('skills', skill.id, { name: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('skills', skill.id, 'name', e.target.value)}
                               placeholder="e.g., JavaScript, Project Management"
                             />
                             <InputField
                               label="Proficiency Level"
                               value={skill.level}
-                              onChange={(e) => handleArrayUpdate('skills', skill.id, { level: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('skills', skill.id, 'level', e.target.value)}
                               placeholder="e.g., Expert, Intermediate, Beginner"
                             />
                             <InputField
                               label="Category"
                               value={skill.category}
-                              onChange={(e) => handleArrayUpdate('skills', skill.id, { category: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('skills', skill.id, 'category', e.target.value)}
                               placeholder="e.g., Technical, Soft Skills"
                             />
                           </div>
-                          <div className="flex justify-end mt-3">
+                          <div className="flex justify-end mt-4">
                             <button
                               onClick={() => handleArrayRemove('skills', skill.id)}
                               className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className="text-sm" />
                               Remove
                             </button>
                           </div>
@@ -1000,25 +1038,25 @@ const ResumeBuilder = ({ token }) => {
                           key={project.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                          className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputField
                               label="Project Name"
                               value={project.name}
-                              onChange={(e) => handleArrayUpdate('projects', project.id, { name: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('projects', project.id, 'name', e.target.value)}
                               placeholder="e.g., E-commerce Website"
                             />
                             <InputField
                               label="Technologies Used"
                               value={project.technologies}
-                              onChange={(e) => handleArrayUpdate('projects', project.id, { technologies: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('projects', project.id, 'technologies', e.target.value)}
                               placeholder="e.g., React, Node.js, MongoDB"
                             />
                             <InputField
                               label="Project URL"
                               value={project.url}
-                              onChange={(e) => handleArrayUpdate('projects', project.id, { url: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('projects', project.id, 'url', e.target.value)}
                               placeholder="e.g., https://github.com/username/project"
                               className="md:col-span-2"
                             />
@@ -1027,17 +1065,17 @@ const ResumeBuilder = ({ token }) => {
                           <TextAreaField
                             label="Project Description"
                             value={project.description}
-                            onChange={(e) => handleArrayUpdate('projects', project.id, { description: e.target.value })}
+                            onChange={(e) => handleArrayUpdate('projects', project.id, 'description', e.target.value)}
                             rows={3}
                             placeholder="Describe the project, your role, and key achievements..."
                           />
                           
-                          <div className="flex justify-end mt-3">
+                          <div className="flex justify-end mt-4">
                             <button
                               onClick={() => handleArrayRemove('projects', project.id)}
                               className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className="text-sm" />
                               Remove
                             </button>
                           </div>
@@ -1065,41 +1103,41 @@ const ResumeBuilder = ({ token }) => {
                           key={cert.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                          className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <InputField
                               label="Certification Name"
                               value={cert.name}
-                              onChange={(e) => handleArrayUpdate('certifications', cert.id, { name: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('certifications', cert.id, 'name', e.target.value)}
                               placeholder="e.g., AWS Certified Solutions Architect"
                             />
                             <InputField
                               label="Issuing Organization"
                               value={cert.issuer}
-                              onChange={(e) => handleArrayUpdate('certifications', cert.id, { issuer: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('certifications', cert.id, 'issuer', e.target.value)}
                               placeholder="e.g., Amazon Web Services"
                             />
                             <InputField
                               label="Issue Date"
                               type="month"
                               value={cert.date}
-                              onChange={(e) => handleArrayUpdate('certifications', cert.id, { date: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('certifications', cert.id, 'date', e.target.value)}
                             />
                             <InputField
                               label="Expiry Date"
                               type="month"
                               value={cert.expiry}
-                              onChange={(e) => handleArrayUpdate('certifications', cert.id, { expiry: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('certifications', cert.id, 'expiry', e.target.value)}
                               placeholder="Leave empty if no expiry"
                             />
                           </div>
-                          <div className="flex justify-end mt-3">
+                          <div className="flex justify-end mt-4">
                             <button
                               onClick={() => handleArrayRemove('certifications', cert.id)}
                               className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className="text-sm" />
                               Remove
                             </button>
                           </div>
@@ -1125,28 +1163,28 @@ const ResumeBuilder = ({ token }) => {
                           key={lang.id}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50"
+                          className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <InputField
                               label="Language"
                               value={lang.name}
-                              onChange={(e) => handleArrayUpdate('languages', lang.id, { name: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('languages', lang.id, 'name', e.target.value)}
                               placeholder="e.g., Spanish, French, Mandarin"
                             />
                             <InputField
                               label="Proficiency Level"
                               value={lang.proficiency}
-                              onChange={(e) => handleArrayUpdate('languages', lang.id, { proficiency: e.target.value })}
+                              onChange={(e) => handleArrayUpdate('languages', lang.id, 'proficiency', e.target.value)}
                               placeholder="e.g., Native, Fluent, Intermediate, Basic"
                             />
                           </div>
-                          <div className="flex justify-end mt-3">
+                          <div className="flex justify-end mt-4">
                             <button
                               onClick={() => handleArrayRemove('languages', lang.id)}
                               className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className="text-sm" />
                               Remove
                             </button>
                           </div>
@@ -1160,9 +1198,9 @@ const ResumeBuilder = ({ token }) => {
           </div>
 
           {/* Right Sidebar - Preview & Actions */}
-          <div className="xl:col-span-1 space-y-6">
-            <FormSection title="👁️ Preview" icon={<FaEye />}>
-              <div className="bg-white border-2 border-gray-200 rounded-xl p-4 min-h-[400px] max-h-[500px] overflow-y-auto">
+          <div className="xl:col-span-1 space-y-8">
+            <FormSection title="👁️ Live Preview" icon={<FaEye />}>
+              <div className="bg-white border-2 border-white/20 rounded-2xl p-6 min-h-[500px] max-h-[600px] overflow-y-auto shadow-2xl">
                 {previewMode ? (
                   <div 
                     id="resume-preview"
@@ -1170,62 +1208,62 @@ const ResumeBuilder = ({ token }) => {
                     dangerouslySetInnerHTML={{ __html: generateResumeHTML() }}
                   />
                 ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    <FaEye className="text-4xl mx-auto mb-4 text-gray-300" />
-                    <p className="text-sm mb-2">Preview your resume in real-time</p>
-                    <p className="text-xs text-gray-400 mb-4">See how your resume looks with the selected template</p>
+                  <div className="text-center text-gray-500 py-12">
+                    <div className="text-6xl mb-4">👁️</div>
+                    <p className="text-lg font-semibold mb-2">Live Preview</p>
+                    <p className="text-sm text-gray-400 mb-6">See your resume come to life in real-time</p>
                     <button
                       onClick={() => setPreviewMode(true)}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:shadow-lg transition-all duration-200"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105"
                     >
-                      Show Preview
+                      Enable Preview
                     </button>
                   </div>
                 )}
               </div>
             </FormSection>
 
-            <FormSection title="🚀 Actions" icon={<FaDownload />}>
-              <div className="space-y-3">
+            <FormSection title="🚀 Quick Actions" icon={<FaRocket />}>
+              <div className="space-y-4">
                 <button
                   onClick={() => {
                     const name = prompt('Enter resume name:', `${resumeData.personal.fullName || 'My'} Resume`);
                     if (name) saveResume(name);
                   }}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
                 >
-                  <FaSave />
+                  <FaSave className="text-lg" />
                   {loading ? 'Saving...' : 'Save Resume'}
                 </button>
                 
                 <button
                   onClick={downloadResumePDF}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
                 >
-                  <FaPrint />
+                  <FaPrint className="text-lg" />
                   Print as PDF
                 </button>
 
                 <button
                   onClick={downloadResumeHTML}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
                 >
-                  <FaDownload />
+                  <FaDownload className="text-lg" />
                   Download as HTML
                 </button>
 
                 <button
                   onClick={() => setPreviewMode(!previewMode)}
-                  className="w-full bg-gradient-to-r from-gray-500 to-gray-700 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
                 >
-                  <FaEye />
+                  <FaEye className="text-lg" />
                   {previewMode ? 'Hide Preview' : 'Show Preview'}
                 </button>
 
                 {lastSave && (
-                  <div className="text-center text-xs text-gray-500 mt-2">
-                    Last saved: {lastSave.toLocaleTimeString()}
+                  <div className="text-center text-xs text-gray-300 mt-4 bg-white/10 rounded-lg p-3">
+                    📍 Last saved: {lastSave.toLocaleTimeString()}
                   </div>
                 )}
               </div>
