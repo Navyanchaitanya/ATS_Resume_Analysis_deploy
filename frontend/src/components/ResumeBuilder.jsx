@@ -1,5 +1,5 @@
 // frontend/src/components/ResumeBuilder.jsx
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaUser, 
@@ -28,23 +28,6 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
-
-// Custom debounce hook
-const useDebounce = (value, delay) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
 
 // PDF generation utility using print
 const generatePDF = (element, filename) => {
@@ -180,9 +163,6 @@ const ResumeBuilder = ({ token }) => {
     languages: []
   });
 
-  // Debounce the entire resume data
-  const debouncedResumeData = useDebounce(resumeData, 1000);
-
   const [templates, setTemplates] = useState([
     {
       id: 1,
@@ -222,16 +202,7 @@ const ResumeBuilder = ({ token }) => {
   const [previewMode, setPreviewMode] = useState(false);
   const [savedResumes, setSavedResumes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [autoSave, setAutoSave] = useState(false);
   const [lastSave, setLastSave] = useState(null);
-  const [isTyping, setIsTyping] = useState(false);
-
-  // Auto-save effect
-  useEffect(() => {
-    if (autoSave && token && debouncedResumeData && !isTyping) {
-      saveResume('Auto-saved Resume', debouncedResumeData);
-    }
-  }, [debouncedResumeData, autoSave, token, isTyping]);
 
   // Load saved resumes
   useEffect(() => {
@@ -251,9 +222,8 @@ const ResumeBuilder = ({ token }) => {
     }
   };
 
-  // Optimized input handlers
+  // Simple input handlers without auto-save
   const handleInputChange = useCallback((section, field, value) => {
-    setIsTyping(true);
     setResumeData(prev => ({
       ...prev,
       [section]: {
@@ -261,15 +231,10 @@ const ResumeBuilder = ({ token }) => {
         [field]: value
       }
     }));
-    
-    // Reset typing indicator after delay
-    setTimeout(() => setIsTyping(false), 1000);
   }, []);
 
   const handleSummaryChange = useCallback((value) => {
-    setIsTyping(true);
     setResumeData(prev => ({ ...prev, summary: value }));
-    setTimeout(() => setIsTyping(false), 1000);
   }, []);
 
   const handleArrayAdd = useCallback((section, newItem) => {
@@ -280,14 +245,12 @@ const ResumeBuilder = ({ token }) => {
   }, []);
 
   const handleArrayUpdate = useCallback((section, id, updates) => {
-    setIsTyping(true);
     setResumeData(prev => ({
       ...prev,
       [section]: prev[section].map(item => 
         item.id === id ? { ...item, ...updates } : item
       )
     }));
-    setTimeout(() => setIsTyping(false), 1000);
   }, []);
 
   const handleArrayRemove = useCallback((section, id) => {
@@ -297,29 +260,24 @@ const ResumeBuilder = ({ token }) => {
     }));
   }, []);
 
-  const saveResume = async (resumeName = 'My Resume', dataToSave = null) => {
+  const saveResume = async (resumeName = 'My Resume') => {
     try {
       setLoading(true);
-      const data = dataToSave || resumeData;
       const response = await axios.post(`${API_BASE_URL}/api/resumes`, {
         name: resumeName,
         template: selectedTemplate,
-        data: data,
-        preview: generateResumePreview(data)
+        data: resumeData,
+        preview: generateResumePreview()
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       await loadSavedResumes();
       setLastSave(new Date());
-      if (!dataToSave) {
-        console.log('Resume saved successfully!');
-      }
+      console.log('Resume saved successfully!');
     } catch (error) {
       console.error('Error saving resume:', error);
-      if (!dataToSave) {
-        alert('Error saving resume. Please try again.');
-      }
+      alert('Error saving resume. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -343,14 +301,14 @@ const ResumeBuilder = ({ token }) => {
     URL.revokeObjectURL(url);
   };
 
-  const generateResumePreview = (data = resumeData) => {
+  const generateResumePreview = () => {
     return `
-      ${data.personal.fullName || 'Your Name'}
-      ${data.personal.email || 'email@example.com'} | ${data.personal.phone || 'Phone'}
-      ${data.summary?.substring(0, 100) || 'Professional summary...'}
-      Experience: ${data.experience.length} positions
-      Education: ${data.education.length} entries
-      Skills: ${data.skills.length} skills
+      ${resumeData.personal.fullName || 'Your Name'}
+      ${resumeData.personal.email || 'email@example.com'} | ${resumeData.personal.phone || 'Phone'}
+      ${resumeData.summary?.substring(0, 100) || 'Professional summary...'}
+      Experience: ${resumeData.experience.length} positions
+      Education: ${resumeData.education.length} entries
+      Skills: ${resumeData.skills.length} skills
     `;
   };
 
@@ -675,35 +633,10 @@ const ResumeBuilder = ({ token }) => {
 
             <FormSection title="⚙️ Settings" icon={<FaMagic />}>
               <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      checked={autoSave}
-                      onChange={(e) => setAutoSave(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div className={`w-10 h-6 rounded-full transition-colors duration-200 ${
-                      autoSave ? 'bg-blue-500' : 'bg-gray-300'
-                    }`}></div>
-                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
-                      autoSave ? 'transform translate-x-4' : ''
-                    }`}></div>
-                  </div>
-                  <span className="text-gray-700 text-sm font-medium">Auto-save</span>
-                </label>
-                
                 {lastSave && (
                   <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg">
                     <FaCheck className="text-xs" />
                     <span>Last saved: {lastSave.toLocaleTimeString()}</span>
-                  </div>
-                )}
-
-                {isTyping && (
-                  <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                    <span>Typing...</span>
                   </div>
                 )}
               </div>
@@ -1292,7 +1225,7 @@ const ResumeBuilder = ({ token }) => {
 
                 {lastSave && (
                   <div className="text-center text-xs text-gray-500 mt-2">
-                    Last auto-save: {lastSave.toLocaleTimeString()}
+                    Last saved: {lastSave.toLocaleTimeString()}
                   </div>
                 )}
               </div>
