@@ -23,7 +23,9 @@ import {
   FaPrint,
   FaMagic,
   FaStar,
-  FaRocket
+  FaRocket,
+  FaGlobe,
+  FaCertificate
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
@@ -233,7 +235,6 @@ const ResumeBuilder = ({ token }) => {
   ]);
 
   const [selectedTemplate, setSelectedTemplate] = useState(1);
-  const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastSave, setLastSave] = useState(null);
 
@@ -529,7 +530,7 @@ const ResumeBuilder = ({ token }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20"
+      className="bg-white/90 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/20"
     >
       <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
         <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
@@ -543,7 +544,7 @@ const ResumeBuilder = ({ token }) => {
 
   // Memoized template selector
   const TemplateSelector = useCallback(({ selected, onSelect }) => (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3">
       {templates.map(template => (
         <motion.div
           key={template.id}
@@ -552,20 +553,20 @@ const ResumeBuilder = ({ token }) => {
           onClick={() => onSelect(template.id)}
           className={`relative rounded-xl border-2 cursor-pointer transition-all duration-300 overflow-hidden group ${
             selected === template.id
-              ? 'border-blue-500 shadow-2xl shadow-blue-500/20'
+              ? 'border-blue-500 shadow-2xl shadow-blue-500/30'
               : 'border-gray-200 hover:border-gray-300 shadow-lg'
           }`}
         >
-          <div className={`w-full h-20 ${template.preview} flex items-center justify-center relative`}>
+          <div className={`w-full h-16 ${template.preview} flex items-center justify-center relative`}>
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
-            <FaFilePdf className="text-white text-2xl z-10" />
+            <FaFilePdf className="text-white text-xl z-10" />
           </div>
           <div className="p-3 bg-white">
             <h4 className="font-bold text-gray-800 text-sm mb-1">{template.name}</h4>
             <p className="text-gray-600 text-xs">{template.description}</p>
           </div>
           {selected === template.id && (
-            <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
               <FaStar className="text-white text-xs" />
             </div>
           )}
@@ -582,17 +583,17 @@ const ResumeBuilder = ({ token }) => {
     { id: 'education', label: 'Education', icon: <FaGraduationCap /> },
     { id: 'skills', label: 'Skills', icon: <FaTools /> },
     { id: 'projects', label: 'Projects', icon: <FaAward /> },
-    { id: 'certifications', label: 'Certifications', icon: <FaAward /> },
+    { id: 'certifications', label: 'Certifications', icon: <FaCertificate /> },
     { id: 'languages', label: 'Languages', icon: <FaLanguage /> }
   ], []);
 
-  // Render array items with stable keys
+  // Render functions for all sections
   const renderExperienceItem = useCallback((exp, index) => (
     <motion.div
       key={exp.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
+      className="border border-gray-200 rounded-xl p-6 bg-white/80 backdrop-blur-sm"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <InputField
@@ -660,13 +661,12 @@ const ResumeBuilder = ({ token }) => {
     </motion.div>
   ), [handleArrayUpdate, handleArrayRemove]);
 
-  // Similar render functions for other sections...
   const renderEducationItem = useCallback((edu, index) => (
     <motion.div
       key={edu.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border border-gray-200 rounded-xl p-6 bg-white/50 backdrop-blur-sm"
+      className="border border-gray-200 rounded-xl p-6 bg-white/80 backdrop-blur-sm"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <InputField
@@ -734,62 +734,206 @@ const ResumeBuilder = ({ token }) => {
     </motion.div>
   ), [handleArrayUpdate, handleArrayRemove]);
 
+  const renderSkillItem = useCallback((skill, index) => (
+    <motion.div
+      key={skill.id}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="border border-gray-200 rounded-xl p-6 bg-white/80 backdrop-blur-sm"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <InputField
+          label="Skill Name"
+          value={skill.name}
+          onChange={(e) => handleArrayUpdate('skills', skill.id, 'name', e.target.value)}
+          placeholder="e.g., JavaScript, Project Management"
+        />
+        <InputField
+          label="Proficiency Level"
+          value={skill.level}
+          onChange={(e) => handleArrayUpdate('skills', skill.id, 'level', e.target.value)}
+          placeholder="e.g., Expert, Intermediate, Beginner"
+        />
+        <InputField
+          label="Category"
+          value={skill.category}
+          onChange={(e) => handleArrayUpdate('skills', skill.id, 'category', e.target.value)}
+          placeholder="e.g., Technical, Soft Skills"
+        />
+      </div>
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => handleArrayRemove('skills', skill.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
+        >
+          <FaTrash className="text-sm" />
+          Remove
+        </button>
+      </div>
+    </motion.div>
+  ), [handleArrayUpdate, handleArrayRemove]);
+
+  const renderProjectItem = useCallback((project, index) => (
+    <motion.div
+      key={project.id}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="border border-gray-200 rounded-xl p-6 bg-white/80 backdrop-blur-sm"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <InputField
+          label="Project Name"
+          value={project.name}
+          onChange={(e) => handleArrayUpdate('projects', project.id, 'name', e.target.value)}
+          placeholder="e.g., E-commerce Website"
+        />
+        <InputField
+          label="Technologies Used"
+          value={project.technologies}
+          onChange={(e) => handleArrayUpdate('projects', project.id, 'technologies', e.target.value)}
+          placeholder="e.g., React, Node.js, MongoDB"
+        />
+        <InputField
+          label="Project URL"
+          value={project.url}
+          onChange={(e) => handleArrayUpdate('projects', project.id, 'url', e.target.value)}
+          placeholder="e.g., https://github.com/username/project"
+          className="md:col-span-2"
+        />
+      </div>
+      
+      <TextAreaField
+        label="Project Description"
+        value={project.description}
+        onChange={(e) => handleArrayUpdate('projects', project.id, 'description', e.target.value)}
+        rows={3}
+        placeholder="Describe the project, your role, and key achievements..."
+      />
+      
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => handleArrayRemove('projects', project.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
+        >
+          <FaTrash className="text-sm" />
+          Remove
+        </button>
+      </div>
+    </motion.div>
+  ), [handleArrayUpdate, handleArrayRemove]);
+
+  const renderCertificationItem = useCallback((cert, index) => (
+    <motion.div
+      key={cert.id}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="border border-gray-200 rounded-xl p-6 bg-white/80 backdrop-blur-sm"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InputField
+          label="Certification Name"
+          value={cert.name}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'name', e.target.value)}
+          placeholder="e.g., AWS Certified Solutions Architect"
+        />
+        <InputField
+          label="Issuing Organization"
+          value={cert.issuer}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'issuer', e.target.value)}
+          placeholder="e.g., Amazon Web Services"
+        />
+        <InputField
+          label="Issue Date"
+          type="month"
+          value={cert.date}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'date', e.target.value)}
+        />
+        <InputField
+          label="Expiry Date"
+          type="month"
+          value={cert.expiry}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'expiry', e.target.value)}
+          placeholder="Leave empty if no expiry"
+        />
+      </div>
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => handleArrayRemove('certifications', cert.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
+        >
+          <FaTrash className="text-sm" />
+          Remove
+        </button>
+      </div>
+    </motion.div>
+  ), [handleArrayUpdate, handleArrayRemove]);
+
+  const renderLanguageItem = useCallback((lang, index) => (
+    <motion.div
+      key={lang.id}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="border border-gray-200 rounded-xl p-6 bg-white/80 backdrop-blur-sm"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InputField
+          label="Language"
+          value={lang.name}
+          onChange={(e) => handleArrayUpdate('languages', lang.id, 'name', e.target.value)}
+          placeholder="e.g., Spanish, French, Mandarin"
+        />
+        <InputField
+          label="Proficiency Level"
+          value={lang.proficiency}
+          onChange={(e) => handleArrayUpdate('languages', lang.id, 'proficiency', e.target.value)}
+          placeholder="e.g., Native, Fluent, Intermediate, Basic"
+        />
+      </div>
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => handleArrayRemove('languages', lang.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors"
+        >
+          <FaTrash className="text-sm" />
+          Remove
+        </button>
+      </div>
+    </motion.div>
+  ), [handleArrayUpdate, handleArrayRemove]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Animated Background */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-8xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center py-8"
         >
           <div className="inline-flex items-center gap-3 mb-4 bg-white/10 backdrop-blur-lg rounded-full px-6 py-3 border border-white/20">
             <FaRocket className="text-yellow-400 text-xl" />
             <span className="text-white text-sm font-semibold">AI-Powered Resume Builder</span>
           </div>
-          <h1 className="text-5xl font-bold text-white mb-4">
+          <h1 className="text-4xl font-bold text-white mb-3">
             Create Your Perfect
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent"> Resume</span>
           </h1>
-          <p className="text-gray-300 text-xl max-w-3xl mx-auto leading-relaxed">
-            Build professional, ATS-friendly resumes that land interviews. 
-            <span className="text-cyan-300"> Download instantly as PDF.</span>
+          <p className="text-gray-300 text-lg max-w-3xl mx-auto">
+            Build professional, ATS-friendly resumes that land interviews
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Left Sidebar - Templates & Settings */}
-          <div className="xl:col-span-1 space-y-8">
-            <FormSection title="🎨 Templates" icon={<FaPalette />}>
-              <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
-            </FormSection>
-
-            <FormSection title="⚡ Status" icon={<FaMagic />}>
-              <div className="space-y-4">
-                {lastSave && (
-                  <div className="flex items-center gap-3 text-sm text-green-400 bg-green-500/10 px-4 py-3 rounded-xl border border-green-500/20">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span>Last saved: {lastSave.toLocaleTimeString()}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-3 text-sm text-blue-400 bg-blue-500/10 px-4 py-3 rounded-xl border border-blue-500/20">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span>Real-time Preview</span>
-                </div>
-              </div>
-            </FormSection>
-          </div>
-
-          {/* Main Content - Form Sections */}
-          <div className="xl:col-span-2">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 p-6">
+          {/* Left Panel - Form Input */}
+          <div className="xl:col-span-2 space-y-6">
             {/* Navigation Tabs */}
             <motion.div 
-              className="bg-white/10 backdrop-blur-lg rounded-2xl p-2 mb-8 sticky top-4 z-20 border border-white/20 shadow-2xl"
+              className="bg-white/10 backdrop-blur-lg rounded-2xl p-3 border border-white/20 shadow-2xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -798,7 +942,7 @@ const ResumeBuilder = ({ token }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-3 px-5 py-4 rounded-xl transition-all duration-300 text-sm font-semibold ${
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-semibold ${
                       activeTab === tab.id
                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25'
                         : 'text-gray-300 hover:bg-white/10 hover:text-white'
@@ -819,12 +963,12 @@ const ResumeBuilder = ({ token }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-8"
+                className="space-y-6"
               >
                 {/* Personal Information */}
                 {activeTab === 'personal' && (
-                  <FormSection title="👤 Personal Information" icon={<FaUser />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormSection title="Personal Information" icon={<FaUser />}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InputField
                         label="Full Name"
                         value={resumeData.personal.fullName}
@@ -876,7 +1020,7 @@ const ResumeBuilder = ({ token }) => {
 
                 {/* Professional Summary */}
                 {activeTab === 'summary' && (
-                  <FormSection title="📝 Professional Summary" icon={<FaBriefcase />}>
+                  <FormSection title="Professional Summary" icon={<FaBriefcase />}>
                     <TextAreaField
                       label="Summary"
                       value={resumeData.summary}
@@ -897,11 +1041,11 @@ const ResumeBuilder = ({ token }) => {
 
                 {/* Work Experience */}
                 {activeTab === 'experience' && (
-                  <FormSection title="💼 Work Experience" icon={<FaBriefcase />}>
+                  <FormSection title="Work Experience" icon={<FaBriefcase />}>
                     <div className="space-y-4">
                       {resumeData.experience.length === 0 ? (
                         <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">📝</div>
+                          <div className="text-gray-400 text-4xl mb-3">💼</div>
                           <p className="text-gray-500 text-sm">No work experience added yet. Start by adding your first job experience.</p>
                         </div>
                       ) : (
@@ -929,7 +1073,7 @@ const ResumeBuilder = ({ token }) => {
 
                 {/* Education */}
                 {activeTab === 'education' && (
-                  <FormSection title="🎓 Education" icon={<FaGraduationCap />}>
+                  <FormSection title="Education" icon={<FaGraduationCap />}>
                     <div className="space-y-4">
                       {resumeData.education.length === 0 ? (
                         <div className="text-center py-8">
@@ -959,47 +1103,150 @@ const ResumeBuilder = ({ token }) => {
                   </FormSection>
                 )}
 
-                {/* Add other sections similarly with simplified structure */}
-                
+                {/* Skills */}
+                {activeTab === 'skills' && (
+                  <FormSection title="Skills" icon={<FaTools />}>
+                    <div className="space-y-4">
+                      {resumeData.skills.length === 0 ? (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 text-4xl mb-3">🛠️</div>
+                          <p className="text-gray-500 text-sm">No skills added yet. Add your technical and professional skills.</p>
+                        </div>
+                      ) : (
+                        resumeData.skills.map((skill, index) => renderSkillItem(skill, index))
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleArrayAdd('skills', {
+                          name: '',
+                          level: '',
+                          category: ''
+                        })}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                      >
+                        <FaPlus className="text-lg" />
+                        <span className="font-semibold">Add New Skill</span>
+                      </button>
+                    </div>
+                  </FormSection>
+                )}
+
+                {/* Projects */}
+                {activeTab === 'projects' && (
+                  <FormSection title="Projects" icon={<FaAward />}>
+                    <div className="space-y-4">
+                      {resumeData.projects.length === 0 ? (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 text-4xl mb-3">🚀</div>
+                          <p className="text-gray-500 text-sm">No projects added yet. Showcase your personal or professional projects.</p>
+                        </div>
+                      ) : (
+                        resumeData.projects.map((project, index) => renderProjectItem(project, index))
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleArrayAdd('projects', {
+                          name: '',
+                          technologies: '',
+                          description: '',
+                          url: ''
+                        })}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                      >
+                        <FaPlus className="text-lg" />
+                        <span className="font-semibold">Add New Project</span>
+                      </button>
+                    </div>
+                  </FormSection>
+                )}
+
+                {/* Certifications */}
+                {activeTab === 'certifications' && (
+                  <FormSection title="Certifications" icon={<FaCertificate />}>
+                    <div className="space-y-4">
+                      {resumeData.certifications.length === 0 ? (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 text-4xl mb-3">🏆</div>
+                          <p className="text-gray-500 text-sm">No certifications added yet. Add your professional certifications.</p>
+                        </div>
+                      ) : (
+                        resumeData.certifications.map((cert, index) => renderCertificationItem(cert, index))
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleArrayAdd('certifications', {
+                          name: '',
+                          issuer: '',
+                          date: '',
+                          expiry: ''
+                        })}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                      >
+                        <FaPlus className="text-lg" />
+                        <span className="font-semibold">Add New Certification</span>
+                      </button>
+                    </div>
+                  </FormSection>
+                )}
+
+                {/* Languages */}
+                {activeTab === 'languages' && (
+                  <FormSection title="Languages" icon={<FaLanguage />}>
+                    <div className="space-y-4">
+                      {resumeData.languages.length === 0 ? (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 text-4xl mb-3">🌐</div>
+                          <p className="text-gray-500 text-sm">No languages added yet. Add languages you speak.</p>
+                        </div>
+                      ) : (
+                        resumeData.languages.map((lang, index) => renderLanguageItem(lang, index))
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleArrayAdd('languages', {
+                          name: '',
+                          proficiency: ''
+                        })}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                      >
+                        <FaPlus className="text-lg" />
+                        <span className="font-semibold">Add New Language</span>
+                      </button>
+                    </div>
+                  </FormSection>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* Right Sidebar - Preview & Actions */}
-          <div className="xl:col-span-1 space-y-8">
-            <FormSection title="👁️ Live Preview" icon={<FaEye />}>
-              <div className="bg-white border-2 border-white/20 rounded-2xl p-6 min-h-[500px] max-h-[600px] overflow-y-auto shadow-2xl">
-                {previewMode ? (
-                  <div 
-                    id="resume-preview"
-                    className="prose max-w-none text-sm"
-                    dangerouslySetInnerHTML={{ __html: generateResumeHTML() }}
-                  />
-                ) : (
-                  <div className="text-center text-gray-500 py-12">
-                    <div className="text-6xl mb-4">👁️</div>
-                    <p className="text-lg font-semibold mb-2">Live Preview</p>
-                    <p className="text-sm text-gray-400 mb-6">See your resume come to life in real-time</p>
-                    <button
-                      onClick={() => setPreviewMode(true)}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105"
-                    >
-                      Enable Preview
-                    </button>
-                  </div>
-                )}
+          {/* Right Panel - Preview & Templates */}
+          <div className="xl:col-span-1 space-y-6">
+            {/* Template Selection */}
+            <FormSection title="Templates" icon={<FaPalette />}>
+              <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
+            </FormSection>
+
+            {/* Live Preview */}
+            <FormSection title="Live Preview" icon={<FaEye />}>
+              <div className="bg-white border-2 border-white/20 rounded-2xl p-6 min-h-[600px] max-h-[700px] overflow-y-auto shadow-2xl">
+                <div 
+                  id="resume-preview"
+                  className="prose max-w-none text-sm"
+                  dangerouslySetInnerHTML={{ __html: generateResumeHTML() }}
+                />
               </div>
             </FormSection>
 
-            <FormSection title="🚀 Quick Actions" icon={<FaRocket />}>
-              <div className="space-y-4">
+            {/* Quick Actions */}
+            <FormSection title="Quick Actions" icon={<FaRocket />}>
+              <div className="space-y-3">
                 <button
                   onClick={() => {
                     const name = prompt('Enter resume name:', `${resumeData.personal.fullName || 'My'} Resume`);
                     if (name) saveResume(name);
                   }}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl text-sm font-semibold hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
                 >
                   <FaSave className="text-lg" />
                   {loading ? 'Saving...' : 'Save Resume'}
@@ -1007,7 +1254,7 @@ const ResumeBuilder = ({ token }) => {
                 
                 <button
                   onClick={downloadResumePDF}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
                 >
                   <FaPrint className="text-lg" />
                   Print as PDF
@@ -1015,22 +1262,14 @@ const ResumeBuilder = ({ token }) => {
 
                 <button
                   onClick={downloadResumeHTML}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
                 >
                   <FaDownload className="text-lg" />
                   Download as HTML
                 </button>
 
-                <button
-                  onClick={() => setPreviewMode(!previewMode)}
-                  className="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
-                >
-                  <FaEye className="text-lg" />
-                  {previewMode ? 'Hide Preview' : 'Show Preview'}
-                </button>
-
                 {lastSave && (
-                  <div className="text-center text-xs text-gray-300 mt-4 bg-white/10 rounded-lg p-3">
+                  <div className="text-center text-xs text-gray-300 mt-2 bg-white/10 rounded-lg p-2">
                     📍 Last saved: {lastSave.toLocaleTimeString()}
                   </div>
                 )}
