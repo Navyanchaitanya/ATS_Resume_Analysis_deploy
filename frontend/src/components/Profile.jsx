@@ -1,7 +1,8 @@
+// components/Profile.jsx
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   FaUser, 
   FaEnvelope, 
@@ -14,7 +15,10 @@ import {
   FaStar,
   FaFileAlt,
   FaExclamationCircle,
-  FaSync
+  FaSync,
+  FaFilePdf,
+  FaChartLine,
+  FaHistory
 } from 'react-icons/fa';
 import { API_BASE_URL } from '../App';
 
@@ -110,6 +114,33 @@ const Profile = ({ token, onLogout }) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
   };
 
+  const StatCard = ({ icon, value, label, color = "blue", onClick }) => {
+    const colorMap = {
+      blue: "from-blue-500 to-cyan-500",
+      green: "from-green-500 to-teal-500", 
+      yellow: "from-yellow-500 to-amber-500",
+      purple: "from-purple-500 to-pink-500",
+      indigo: "from-indigo-500 to-purple-500"
+    };
+
+    return (
+      <motion.div 
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onClick}
+        className={`bg-gradient-to-br ${colorMap[color]} text-white p-6 rounded-2xl shadow-lg cursor-pointer transition-all`}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-2xl">
+            {icon}
+          </div>
+        </div>
+        <div className="text-3xl font-bold mb-2">{value}</div>
+        <div className="text-white/90 text-sm">{label}</div>
+      </motion.div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 flex items-center justify-center">
@@ -125,14 +156,14 @@ const Profile = ({ token, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
             <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
               Profile Dashboard
             </span>
           </h1>
-          <p className="text-gray-600">Manage your professional identity</p>
+          <p className="text-gray-600">Manage your professional identity and track your progress</p>
         </div>
 
         {error && (
@@ -171,23 +202,23 @@ const Profile = ({ token, onLogout }) => {
                 <p className="text-gray-500 text-sm">{user?.email}</p>
               </div>
 
-              {/* Stats - REAL DATA FROM API */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <FaFileAlt className="text-blue-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-800">
-                    {userStats?.totalAnalyses || 0}
-                  </div>
-                  <div className="text-gray-600 text-sm">Resumes Analyzed</div>
-                </div>
+              {/* Quick Stats */}
+              <div className="space-y-4 mb-8">
+                <StatCard
+                  icon={<FaFileAlt />}
+                  value={userStats?.totalAnalyses || 0}
+                  label="Resumes Analyzed"
+                  color="blue"
+                  onClick={() => navigate('/resume-score')}
+                />
                 
-                <div className="text-center p-4 bg-cyan-50 rounded-xl">
-                  <FaStar className="text-cyan-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-800">
-                    {userStats?.averageScore ? Math.round(userStats.averageScore) + '%' : '0%'}
-                  </div>
-                  <div className="text-gray-600 text-sm">Avg. Score</div>
-                </div>
+                <StatCard
+                  icon={<FaFilePdf />}
+                  value={userStats?.savedResumes || 0}
+                  label="Saved Resumes"
+                  color="purple"
+                  onClick={() => navigate('/resume-builder')}
+                />
               </div>
 
               {/* Action Button */}
@@ -210,7 +241,7 @@ const Profile = ({ token, onLogout }) => {
             </div>
           </div>
 
-          {/* Right Column - Profile Details */}
+          {/* Right Column - Profile Details & Stats */}
           <div className="lg:col-span-2 space-y-8">
             {/* Personal Info Card */}
             <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 border border-white shadow-2xl">
@@ -230,7 +261,7 @@ const Profile = ({ token, onLogout }) => {
                       name="name"
                       value={form.name}
                       onChange={handleInputChange}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter your name"
                     />
                   ) : (
@@ -254,7 +285,7 @@ const Profile = ({ token, onLogout }) => {
                       name="profession"
                       value={form.profession}
                       onChange={handleInputChange}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="e.g., Software Engineer"
                     />
                   ) : (
@@ -273,7 +304,7 @@ const Profile = ({ token, onLogout }) => {
                       name="location"
                       value={form.location}
                       onChange={handleInputChange}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="e.g., San Francisco, CA"
                     />
                   ) : (
@@ -294,7 +325,7 @@ const Profile = ({ token, onLogout }) => {
                     value={form.bio}
                     onChange={handleInputChange}
                     rows="4"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 resize-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     placeholder="Tell us about yourself..."
                   />
                 ) : (
@@ -340,18 +371,18 @@ const Profile = ({ token, onLogout }) => {
               )}
             </div>
 
-            {/* Stats Card */}
+            {/* Comprehensive Stats Card */}
             <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 border border-white shadow-2xl">
               <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                <FaAward className="mr-3 text-yellow-500" />
-                Your Resume Analysis Statistics
+                <FaChartLine className="mr-3 text-blue-500" />
+                Your Activity Statistics
               </h3>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="text-center p-4 bg-blue-50 rounded-xl">
                   <FaFileAlt className="text-blue-500 mx-auto mb-2" />
                   <div className="text-2xl font-bold text-gray-800">{userStats?.totalAnalyses || 0}</div>
-                  <div className="text-gray-600 text-sm">Total Analyses</div>
+                  <div className="text-gray-600 text-sm">Resume Analyses</div>
                 </div>
                 
                 <div className="text-center p-4 bg-green-50 rounded-xl">
@@ -362,6 +393,14 @@ const Profile = ({ token, onLogout }) => {
                   <div className="text-gray-600 text-sm">Average Score</div>
                 </div>
                 
+                <div className="text-center p-4 bg-purple-50 rounded-xl">
+                  <FaFilePdf className="text-purple-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {userStats?.savedResumes || 0}
+                  </div>
+                  <div className="text-gray-600 text-sm">Saved Resumes</div>
+                </div>
+                
                 <div className="text-center p-4 bg-yellow-50 rounded-xl">
                   <FaAward className="text-yellow-500 mx-auto mb-2" />
                   <div className="text-2xl font-bold text-gray-800">
@@ -369,13 +408,80 @@ const Profile = ({ token, onLogout }) => {
                   </div>
                   <div className="text-gray-600 text-sm">Highest Score</div>
                 </div>
-                
-                <div className="text-center p-4 bg-purple-50 rounded-xl">
-                  <FaUser className="text-purple-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-800">
-                    {userStats?.recentAnalyses?.length || 0}
-                  </div>
-                  <div className="text-gray-600 text-sm">Recent</div>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Recent Analyses */}
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <FaHistory className="mr-2 text-blue-500" />
+                    Recent Analyses
+                  </h4>
+                  {userStats?.recentAnalyses && userStats.recentAnalyses.length > 0 ? (
+                    <div className="space-y-2">
+                      {userStats.recentAnalyses.slice(0, 3).map(analysis => (
+                        <div key={analysis.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <FaFileAlt className="text-blue-600 text-sm" />
+                            </div>
+                            <div>
+                              <div className="text-gray-800 font-medium text-sm">{analysis.filename || 'Resume'}</div>
+                              <div className="text-gray-600 text-xs">{analysis.score?.total || 0}% score</div>
+                            </div>
+                          </div>
+                          <div className="text-gray-500 text-xs">
+                            {new Date(analysis.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No recent analyses</p>
+                  )}
+                  <Link 
+                    to="/resume-score" 
+                    className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block"
+                  >
+                    Analyze more resumes →
+                  </Link>
+                </div>
+
+                {/* Recent Resumes */}
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <FaFilePdf className="mr-2 text-purple-500" />
+                    Recent Resumes
+                  </h4>
+                  {userStats?.recentResumes && userStats.recentResumes.length > 0 ? (
+                    <div className="space-y-2">
+                      {userStats.recentResumes.slice(0, 3).map(resume => (
+                        <div key={resume.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                              <FaFilePdf className="text-purple-600 text-sm" />
+                            </div>
+                            <div>
+                              <div className="text-gray-800 font-medium text-sm">{resume.name}</div>
+                              <div className="text-gray-600 text-xs">Template {resume.template}</div>
+                            </div>
+                          </div>
+                          <div className="text-gray-500 text-xs">
+                            {new Date(resume.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No saved resumes</p>
+                  )}
+                  <Link 
+                    to="/resume-builder" 
+                    className="text-purple-600 hover:text-purple-800 text-sm mt-2 inline-block"
+                  >
+                    Create new resume →
+                  </Link>
                 </div>
               </div>
             </div>

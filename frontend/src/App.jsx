@@ -56,8 +56,7 @@ function App() {
             <Route path="/home" element={userToken ? <LoggedInHome token={userToken} /> : <Navigate to="/login" />} />
             <Route path="/profile" element={userToken ? <Profile token={userToken} onLogout={handleLogout} /> : <Navigate to="/login" />} />
             <Route path="/resume-score" element={userToken ? <ResumeScore token={userToken} /> : <Navigate to="/login" />} />
-            <Route path="/resume-builder" element={userToken ? <ResumeBuilder /> : <Navigate to="/login" />} />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/resume-builder" element={userToken ? <ResumeBuilder token={userToken} /> : <Navigate to="/login" />} />            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </ErrorBoundary>
       </div>

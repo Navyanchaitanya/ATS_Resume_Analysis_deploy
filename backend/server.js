@@ -67,6 +67,19 @@ const ResumeAnalysis = sequelize.define('ResumeAnalysis', {
   timestamps: true
 });
 
+// ✅ ADD RESUME MODEL
+const Resume = sequelize.define('Resume', {
+  id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  name: { type: Sequelize.STRING(120), allowNull: false },
+  template: { type: Sequelize.INTEGER, allowNull: false, defaultValue: 1 },
+  data: { type: Sequelize.TEXT, allowNull: false },
+  preview: { type: Sequelize.TEXT, allowNull: true },
+  user_id: { type: Sequelize.INTEGER, allowNull: false }
+}, {
+  tableName: 'resumes',
+  timestamps: true
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -497,11 +510,13 @@ app.get('/api/db-test', async (req, res) => {
     
     const userCount = await User.count();
     const analysisCount = await ResumeAnalysis.count();
+    const resumeCount = await Resume.count();
     
     res.json({
       status: 'Database connected successfully',
       users: userCount,
       analyses: analysisCount,
+      resumes: resumeCount,
       database: 'PostgreSQL (Render)'
     });
   } catch (error) {
@@ -932,30 +947,47 @@ app.get('/api/results', verifyToken, async (req, res) => {
   }
 });
 
-// Get user stats
+// ✅ UPDATED USER STATS - INCLUDES RESUME DATA
 app.get('/api/user-stats', verifyToken, async (req, res) => {
   try {
-    console.log('Fetching stats for user:', req.userId);
+    console.log('Fetching comprehensive stats for user:', req.userId);
     
+    // Get resume analyses
     const analyses = await ResumeAnalysis.findAll({
       where: { user_id: req.userId },
       order: [['createdAt', 'DESC']]
     });
 
-    if (!analyses || analyses.length === 0) {
+    // Get saved resumes
+    const resumes = await Resume.findAll({
+      where: { user_id: req.userId },
+      order: [['createdAt', 'DESC']]
+    });
+
+    if ((!analyses || analyses.length === 0) && (!resumes || resumes.length === 0)) {
       return res.json({
+        // Analysis stats
         totalAnalyses: 0,
         averageScore: 0,
         highestScore: 0,
-        recentAnalyses: []
+        recentAnalyses: [],
+        
+        // Resume builder stats
+        savedResumes: 0,
+        recentResumes: [],
+        
+        // Combined stats
+        totalDocuments: 0,
+        lastActivity: null
       });
     }
 
-    const scores = analyses.map(a => a.total_score).filter(score => score !== null && score !== undefined);
+    // Calculate analysis stats
+    const analysisScores = analyses.map(a => a.total_score).filter(score => score !== null && score !== undefined);
     
     const totalAnalyses = analyses.length;
-    const averageScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
-    const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
+    const averageScore = analysisScores.length > 0 ? analysisScores.reduce((sum, score) => sum + score, 0) / analysisScores.length : 0;
+    const highestScore = analysisScores.length > 0 ? Math.max(...analysisScores) : 0;
 
     const recentAnalyses = analyses.slice(0, 3).map(analysis => ({
       id: analysis.id,
@@ -971,18 +1003,252 @@ app.get('/api/user-stats', verifyToken, async (req, res) => {
       created_at: analysis.createdAt
     }));
 
-    console.log('Stats fetched successfully for user:', req.userId);
+    // Calculate resume stats
+    const savedResumes = resumes.length;
+    const recentResumes = resumes.slice(0, 3).map(resume => ({
+      id: resume.id,
+      name: resume.name,
+      preview: resume.preview,
+      template: resume.template,
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt
+    }));
+
+    // Calculate combined stats
+    const totalDocuments = totalAnalyses + savedResumes;
+    
+    // Find last activity date
+    const allActivities = [
+      ...analyses.map(a => new Date(a.createdAt)),
+      ...resumes.map(r => new Date(r.createdAt))
+    ].sort((a, b) => b - a);
+    
+    const lastActivity = allActivities.length > 0 ? allActivities[0] : null;
+
+    console.log('Comprehensive stats fetched successfully for user:', req.userId);
     
     res.json({
+      // Analysis stats
       totalAnalyses,
       averageScore: Math.round(averageScore * 100) / 100,
       highestScore: Math.round(highestScore * 100) / 100,
-      recentAnalyses
+      recentAnalyses,
+      
+      // Resume builder stats
+      savedResumes,
+      recentResumes,
+      
+      // Combined stats
+      totalDocuments,
+      lastActivity: lastActivity ? lastActivity.toISOString() : null,
+      
+      // Activity summary
+      activitySummary: {
+        analysesThisMonth: analyses.filter(a => {
+          const analysisDate = new Date(a.createdAt);
+          const now = new Date();
+          return analysisDate.getMonth() === now.getMonth() && 
+                 analysisDate.getFullYear() === now.getFullYear();
+        }).length,
+        resumesThisMonth: resumes.filter(r => {
+          const resumeDate = new Date(r.createdAt);
+          const now = new Date();
+          return resumeDate.getMonth() === now.getMonth() && 
+                 resumeDate.getFullYear() === now.getFullYear();
+        }).length
+      }
     });
+    
   } catch (error) {
     console.error('User stats error:', error);
     res.status(500).json({ 
       error: 'Failed to load statistics data',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+    });
+  }
+});
+
+// ✅ RESUME BUILDER ROUTES
+
+// Get all resumes for user
+app.get('/api/resumes', verifyToken, async (req, res) => {
+  try {
+    console.log('Fetching resumes for user:', req.userId);
+    
+    const resumes = await Resume.findAll({
+      where: { user_id: req.userId },
+      order: [['createdAt', 'DESC']]
+    });
+
+    const formattedResumes = resumes.map(resume => ({
+      id: resume.id,
+      name: resume.name,
+      template: resume.template,
+      preview: resume.preview,
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt
+    }));
+
+    console.log(`Found ${resumes.length} resumes for user:`, req.userId);
+    res.json(formattedResumes);
+  } catch (error) {
+    console.error('Error fetching resumes:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch resumes',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+    });
+  }
+});
+
+// Save new resume
+app.post('/api/resumes', verifyToken, async (req, res) => {
+  try {
+    console.log('Saving resume for user:', req.userId);
+    
+    const { name, template, data, preview } = req.body;
+
+    if (!name || !data) {
+      return res.status(400).json({ error: 'Resume name and data are required' });
+    }
+
+    const resume = await Resume.create({
+      name,
+      template: template || 1,
+      data: JSON.stringify(data),
+      preview: preview || 'No preview available',
+      user_id: req.userId
+    });
+
+    console.log('Resume saved successfully:', resume.id);
+    
+    res.json({
+      message: 'Resume saved successfully',
+      resume: {
+        id: resume.id,
+        name: resume.name,
+        template: resume.template,
+        preview: resume.preview,
+        createdAt: resume.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error saving resume:', error);
+    res.status(500).json({ 
+      error: 'Failed to save resume',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+    });
+  }
+});
+
+// Get specific resume
+app.get('/api/resumes/:id', verifyToken, async (req, res) => {
+  try {
+    console.log('Fetching resume:', req.params.id, 'for user:', req.userId);
+    
+    const resume = await Resume.findOne({
+      where: { 
+        id: req.params.id,
+        user_id: req.userId 
+      }
+    });
+    
+    if (!resume) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    // Parse the JSON data back to object
+    const resumeData = {
+      id: resume.id,
+      name: resume.name,
+      template: resume.template,
+      data: JSON.parse(resume.data),
+      preview: resume.preview,
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt
+    };
+
+    console.log('Resume fetched successfully:', resume.id);
+    res.json(resumeData);
+  } catch (error) {
+    console.error('Error fetching resume:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch resume',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+    });
+  }
+});
+
+// Update resume
+app.put('/api/resumes/:id', verifyToken, async (req, res) => {
+  try {
+    console.log('Updating resume:', req.params.id, 'for user:', req.userId);
+    
+    const { name, template, data, preview } = req.body;
+    
+    const resume = await Resume.findOne({
+      where: { 
+        id: req.params.id,
+        user_id: req.userId 
+      }
+    });
+    
+    if (!resume) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    if (name !== undefined) resume.name = name;
+    if (template !== undefined) resume.template = template;
+    if (data !== undefined) resume.data = JSON.stringify(data);
+    if (preview !== undefined) resume.preview = preview;
+
+    await resume.save();
+
+    console.log('Resume updated successfully:', resume.id);
+    
+    res.json({
+      message: 'Resume updated successfully',
+      resume: {
+        id: resume.id,
+        name: resume.name,
+        template: resume.template,
+        preview: resume.preview,
+        updatedAt: resume.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating resume:', error);
+    res.status(500).json({ 
+      error: 'Failed to update resume',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
+    });
+  }
+});
+
+// Delete resume
+app.delete('/api/resumes/:id', verifyToken, async (req, res) => {
+  try {
+    console.log('Deleting resume:', req.params.id, 'for user:', req.userId);
+    
+    const resume = await Resume.findOne({
+      where: { 
+        id: req.params.id,
+        user_id: req.userId 
+      }
+    });
+    
+    if (!resume) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    await resume.destroy();
+
+    console.log('Resume deleted successfully:', req.params.id);
+    
+    res.json({ message: 'Resume deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting resume:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete resume',
       details: process.env.NODE_ENV === 'development' ? error.message : 'Database error'
     });
   }
@@ -1010,6 +1276,7 @@ async function startServer() {
     
     await User.sync({ force: false });
     await ResumeAnalysis.sync({ force: false });
+    await Resume.sync({ force: false }); // ✅ ADD RESUME TABLE SYNC
     console.log('✅ Database tables synchronized.');
     
     app.listen(PORT, '0.0.0.0', () => {
@@ -1023,6 +1290,7 @@ async function startServer() {
       console.log(`🧪 API Test: /api/test`);
       console.log(`🗄️  DB Test: /api/db-test`);
       console.log(`🔐 Forgot Password: /api/get-security-question`);
+      console.log(`📝 Resume Builder: /api/resumes`);
       console.log('='.repeat(50));
     });
   } catch (error) {
