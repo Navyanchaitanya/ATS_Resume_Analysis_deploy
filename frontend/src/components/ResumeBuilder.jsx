@@ -27,7 +27,6 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
-import html2pdf from 'html2pdf.js';
 
 // Custom debounce hook
 const useDebounce = (value, delay) => {
@@ -44,6 +43,54 @@ const useDebounce = (value, delay) => {
   }, [value, delay]);
 
   return debouncedValue;
+};
+
+// PDF generation utility
+const generatePDF = (element, filename) => {
+  const opt = {
+    margin: 0.5,
+    filename: `${filename}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { 
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      letterRendering: true
+    },
+    jsPDF: { 
+      unit: 'in', 
+      format: 'letter', 
+      orientation: 'portrait' 
+    }
+  };
+
+  // Import html2pdf only on client side
+  import('html2pdf.js').then((html2pdf) => {
+    html2pdf.default().set(opt).from(element).save();
+  }).catch(error => {
+    console.error('Error loading PDF library:', error);
+    // Fallback: open in new window for printing
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${filename}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            @media print {
+              body { margin: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          ${element.innerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  });
 };
 
 const ResumeBuilder = ({ token }) => {
@@ -214,15 +261,24 @@ const ResumeBuilder = ({ token }) => {
 
   const downloadResumePDF = () => {
     const element = document.getElementById('resume-preview');
-    const opt = {
-      margin: [0.5, 0.5, 0.5, 0.5],
-      filename: `${resumeData.personal.fullName || 'resume'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
+    if (element) {
+      generatePDF(element, `${resumeData.personal.fullName || 'resume'}`);
+    } else {
+      alert('Please enable preview first to download as PDF');
+    }
+  };
 
-    html2pdf().set(opt).from(element).save();
+  const downloadResumeHTML = () => {
+    const resumeContent = generateResumeHTML();
+    const blob = new Blob([resumeContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${resumeData.personal.fullName || 'resume'}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const generateResumePreview = (data = resumeData) => {
@@ -337,15 +393,14 @@ const ResumeBuilder = ({ token }) => {
     
     return `
       <div class="header">
-        <div>
-          <div class="name">${personal.fullName || 'Your Name'}</div>
-          <div class="contact-info">
-            ${personal.email ? `${personal.email} • ` : ''}
-            ${personal.phone ? `${personal.phone} • ` : ''}
-            ${personal.location || ''}
-            ${personal.linkedin ? `<br>LinkedIn: ${personal.linkedin}` : ''}
-            ${personal.github ? ` • GitHub: ${personal.github}` : ''}
-          </div>
+        <div class="name">${personal.fullName || 'Your Name'}</div>
+        <div class="contact-info">
+          ${personal.email ? `${personal.email} • ` : ''}
+          ${personal.phone ? `${personal.phone} • ` : ''}
+          ${personal.location || ''}
+          ${personal.linkedin ? `<br>LinkedIn: ${personal.linkedin}` : ''}
+          ${personal.github ? ` • GitHub: ${personal.github}` : ''}
+          ${personal.portfolio ? ` • Portfolio: ${personal.portfolio}` : ''}
         </div>
       </div>
 
@@ -401,8 +456,9 @@ const ResumeBuilder = ({ token }) => {
         ${projects.map(project => `
           <div class="experience-item">
             <div class="job-title">${project.name || 'Project Name'}</div>
-            ${project.technologies ? `<div class="company">${project.technologies}</div>` : ''}
+            ${project.technologies ? `<div class="company">Technologies: ${project.technologies}</div>` : ''}
             ${project.description ? `<p>${project.description}</p>` : ''}
+            ${project.url ? `<div class="company">URL: ${project.url}</div>` : ''}
           </div>
         `).join('')}
       </div>
@@ -491,17 +547,6 @@ const ResumeBuilder = ({ token }) => {
     </div>
   ));
 
-  const navigationTabs = useMemo(() => [
-    { id: 'personal', label: 'Personal', icon: <FaUser /> },
-    { id: 'summary', label: 'Summary', icon: <FaBriefcase /> },
-    { id: 'experience', label: 'Experience', icon: <FaBriefcase /> },
-    { id: 'education', label: 'Education', icon: <FaGraduationCap /> },
-    { id: 'skills', label: 'Skills', icon: <FaTools /> },
-    { id: 'projects', label: 'Projects', icon: <FaAward /> },
-    { id: 'certifications', label: 'Certifications', icon: <FaAward /> },
-    { id: 'languages', label: 'Languages', icon: <FaLanguage /> }
-  ], []);
-
   // Input field component for consistent styling
   const InputField = ({ label, value, onChange, type = 'text', placeholder, className = '' }) => (
     <div className={className}>
@@ -528,6 +573,17 @@ const ResumeBuilder = ({ token }) => {
       />
     </div>
   );
+
+  const navigationTabs = useMemo(() => [
+    { id: 'personal', label: 'Personal', icon: <FaUser /> },
+    { id: 'summary', label: 'Summary', icon: <FaBriefcase /> },
+    { id: 'experience', label: 'Experience', icon: <FaBriefcase /> },
+    { id: 'education', label: 'Education', icon: <FaGraduationCap /> },
+    { id: 'skills', label: 'Skills', icon: <FaTools /> },
+    { id: 'projects', label: 'Projects', icon: <FaAward /> },
+    { id: 'certifications', label: 'Certifications', icon: <FaAward /> },
+    { id: 'languages', label: 'Languages', icon: <FaLanguage /> }
+  ], []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
@@ -1157,8 +1213,16 @@ const ResumeBuilder = ({ token }) => {
                 </button>
 
                 <button
-                  onClick={() => setPreviewMode(!previewMode)}
+                  onClick={downloadResumeHTML}
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <FaDownload />
+                  Download as HTML
+                </button>
+
+                <button
+                  onClick={() => setPreviewMode(!previewMode)}
+                  className="w-full bg-gradient-to-r from-gray-500 to-gray-700 text-white py-3 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <FaEye />
                   {previewMode ? 'Hide Preview' : 'Show Preview'}
