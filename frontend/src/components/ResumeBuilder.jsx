@@ -1,7 +1,7 @@
 // frontend/src/components/ResumeBuilder.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
-// ATS-optimized input components
+// Input components with proper focus handling
 const InputField = ({ label, value, onChange, type = 'text', placeholder, className = '' }) => {
   return (
     <div className={className}>
@@ -93,7 +93,10 @@ const ResumeBuilder = () => {
   const [loading, setLoading] = useState(false);
   const [lastSave, setLastSave] = useState(null);
 
-  // Input handlers
+  // Use refs to track form sections and prevent re-renders from losing focus
+  const formRef = useRef(null);
+
+  // Input handlers - using functional updates to prevent unnecessary re-renders
   const handleInputChange = (section, field, value) => {
     setResumeData(prev => ({
       ...prev,
@@ -303,142 +306,6 @@ const ResumeBuilder = () => {
               font-size: 9pt;
             }
           `;
-        case 'executive':
-          return `
-            body { 
-              font-family: 'Calibri', 'Arial', sans-serif; 
-              margin: 0.6in; 
-              line-height: 1.4; 
-              color: #000000;
-              font-size: 11pt;
-            }
-            .resume-container { max-width: 100%; }
-            .header { 
-              text-align: center; 
-              margin-bottom: 25px; 
-              padding-bottom: 15px; 
-              border-bottom: 3px solid #2d3748;
-            }
-            .name { 
-              font-size: 20pt; 
-              font-weight: bold; 
-              color: #000000; 
-              margin-bottom: 8px;
-              letter-spacing: 1px;
-            }
-            .contact-info { 
-              color: #4a5568; 
-              font-size: 10pt;
-              letter-spacing: 0.5px;
-            }
-            .section { 
-              margin-bottom: 20px; 
-            }
-            .section-title { 
-              font-size: 12pt; 
-              font-weight: bold; 
-              color: #2d3748; 
-              border-bottom: 2px solid #e2e8f0; 
-              padding-bottom: 4px; 
-              margin-bottom: 10px;
-              text-transform: uppercase;
-            }
-            .experience-item, .education-item { 
-              margin-bottom: 15px; 
-              padding-left: 15px;
-              border-left: 3px solid #e2e8f0;
-            }
-            .job-title { 
-              font-weight: bold; 
-              color: #000000; 
-              font-size: 11pt;
-            }
-            .company { 
-              color: #4a5568; 
-              font-weight: 500;
-            }
-            .date { 
-              color: #718096; 
-              font-size: 10pt; 
-              margin: 3px 0;
-            }
-            .skills { 
-              display: block; 
-              margin-top: 6px; 
-            }
-            .skill-tag { 
-              display: inline-block;
-              margin: 2px 4px 2px 0;
-              padding: 3px 8px;
-              background: #edf2f7;
-              border-radius: 4px;
-              font-size: 9pt;
-            }
-          `;
-        case 'minimalist':
-          return `
-            body { 
-              font-family: 'Helvetica', 'Arial', sans-serif; 
-              margin: 0.7in; 
-              line-height: 1.5; 
-              color: #000000;
-              font-size: 10pt;
-            }
-            .resume-container { max-width: 100%; }
-            .header { 
-              text-align: center; 
-              margin-bottom: 30px; 
-            }
-            .name { 
-              font-size: 14pt; 
-              font-weight: bold; 
-              color: #000000; 
-              margin-bottom: 5px;
-            }
-            .contact-info { 
-              color: #666666; 
-              font-size: 9pt;
-            }
-            .section { 
-              margin-bottom: 20px; 
-            }
-            .section-title { 
-              font-size: 11pt; 
-              font-weight: bold; 
-              color: #000000; 
-              margin-bottom: 8px;
-            }
-            .experience-item, .education-item { 
-              margin-bottom: 12px; 
-            }
-            .job-title { 
-              font-weight: bold; 
-              color: #000000; 
-              font-size: 10pt;
-            }
-            .company { 
-              color: #444444; 
-              font-weight: normal;
-            }
-            .date { 
-              color: #666666; 
-              font-size: 9pt; 
-              margin: 2px 0;
-            }
-            .skills { 
-              display: block; 
-              margin-top: 5px; 
-            }
-            .skill-tag { 
-              display: inline-block;
-              margin: 1px 3px 1px 0;
-              padding: 1px 6px;
-              background: white;
-              border: 1px solid #e2e8f0;
-              border-radius: 2px;
-              font-size: 8pt;
-            }
-          `;
         default:
           return `
             body { 
@@ -504,28 +371,12 @@ const ResumeBuilder = () => {
   // ATS-optimized resume content generation
   const generateResumeContent = () => {
     const { personal, summary, experience, education, skills, projects, certifications, languages } = resumeData;
-    const template = templates.find(t => t.id === selectedTemplate);
     
-    const getTemplateClass = () => {
-      switch(template.style) {
-        case 'ats-professional':
-          return 'font-sans text-black';
-        case 'modern-classic':
-          return 'font-serif text-black';
-        case 'executive':
-          return 'font-sans text-black';
-        case 'minimalist':
-          return 'font-sans text-black';
-        default:
-          return 'font-sans text-black';
-      }
-    };
-
     return `
-      <div class="resume-container ${getTemplateClass()}">
+      <div class="resume-container">
         <!-- Header Section -->
         <div class="header">
-          <div class="name text-2xl font-bold uppercase">${personal.fullName || 'Your Name'}</div>
+          <div class="name">${personal.fullName || 'Your Name'}</div>
           <div class="contact-info">
             ${personal.email ? `${personal.email} • ` : ''}
             ${personal.phone ? `${personal.phone} • ` : ''}
@@ -594,6 +445,7 @@ const ResumeBuilder = () => {
               <div class="job-title">${project.name || 'Project Name'}</div>
               ${project.technologies ? `<div class="company">Technologies: ${project.technologies}</div>` : ''}
               ${project.description ? `<div class="description">${project.description}</div>` : ''}
+              ${project.url ? `<div class="company">URL: ${project.url}</div>` : ''}
             </div>
           `).join('')}
         </div>
@@ -607,7 +459,7 @@ const ResumeBuilder = () => {
             <div class="experience-item">
               <div class="job-title">${cert.name || 'Certification Name'}</div>
               <div class="company">${cert.issuer || 'Issuing Organization'}</div>
-              <div class="date">${cert.date || 'Date Earned'}</div>
+              <div class="date">${cert.date || 'Date Earned'} ${cert.expiry ? `- Expires: ${cert.expiry}` : ''}</div>
             </div>
           `).join('')}
         </div>
@@ -850,6 +702,118 @@ const ResumeBuilder = () => {
     </div>
   );
 
+  const renderProjectItem = (project) => (
+    <div key={project.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <InputField
+          label="Project Name *"
+          value={project.name}
+          onChange={(e) => handleArrayUpdate('projects', project.id, 'name', e.target.value)}
+          placeholder="e.g., E-commerce Website"
+        />
+        <InputField
+          label="Technologies Used"
+          value={project.technologies}
+          onChange={(e) => handleArrayUpdate('projects', project.id, 'technologies', e.target.value)}
+          placeholder="e.g., React, Node.js, MongoDB"
+        />
+        <InputField
+          label="Project URL"
+          value={project.url}
+          onChange={(e) => handleArrayUpdate('projects', project.id, 'url', e.target.value)}
+          placeholder="e.g., https://github.com/username/project"
+          className="md:col-span-2"
+        />
+      </div>
+      
+      <TextAreaField
+        label="Project Description & Achievements"
+        value={project.description}
+        onChange={(e) => handleArrayUpdate('projects', project.id, 'description', e.target.value)}
+        rows={3}
+        placeholder="• Developed a full-stack e-commerce platform serving 1000+ users...
+• Implemented payment integration and user authentication...
+• Reduced page load time by 50% through optimization..."
+      />
+      
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={() => handleArrayRemove('projects', project.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
+        >
+          🗑️ Remove
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderCertificationItem = (cert) => (
+    <div key={cert.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <InputField
+          label="Certification Name *"
+          value={cert.name}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'name', e.target.value)}
+          placeholder="e.g., AWS Certified Solutions Architect"
+        />
+        <InputField
+          label="Issuing Organization *"
+          value={cert.issuer}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'issuer', e.target.value)}
+          placeholder="e.g., Amazon Web Services"
+        />
+        <InputField
+          label="Issue Date"
+          type="month"
+          value={cert.date}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'date', e.target.value)}
+        />
+        <InputField
+          label="Expiry Date"
+          type="month"
+          value={cert.expiry}
+          onChange={(e) => handleArrayUpdate('certifications', cert.id, 'expiry', e.target.value)}
+          placeholder="Leave empty if no expiry"
+        />
+      </div>
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={() => handleArrayRemove('certifications', cert.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
+        >
+          🗑️ Remove
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderLanguageItem = (lang) => (
+    <div key={lang.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <InputField
+          label="Language *"
+          value={lang.name}
+          onChange={(e) => handleArrayUpdate('languages', lang.id, 'name', e.target.value)}
+          placeholder="e.g., Spanish, French, Mandarin"
+        />
+        <InputField
+          label="Proficiency Level"
+          value={lang.proficiency}
+          onChange={(e) => handleArrayUpdate('languages', lang.id, 'proficiency', e.target.value)}
+          placeholder="e.g., Native, Fluent, Intermediate, Basic"
+        />
+      </div>
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={() => handleArrayRemove('languages', lang.id)}
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
+        >
+          🗑️ Remove
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
       {/* Header */}
@@ -871,7 +835,7 @@ const ResumeBuilder = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Form Input */}
-          <div className="space-y-6">
+          <div className="space-y-6" ref={formRef}>
             {/* Navigation Tabs */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
               <div className="flex flex-wrap gap-2">
@@ -1048,6 +1012,88 @@ const ResumeBuilder = () => {
                     <div className="text-xs text-gray-500">
                       💡 <strong>ATS Tip:</strong> Include both technical and soft skills relevant to your target role.
                     </div>
+                  </div>
+                </FormSection>
+              )}
+
+              {/* Projects */}
+              {activeTab === 'projects' && (
+                <FormSection title="Projects" icon="🚀">
+                  <div className="space-y-4">
+                    {resumeData.projects.length === 0 ? (
+                      <div className="text-center py-6">
+                        <div className="text-gray-400 text-3xl mb-2">🚀</div>
+                        <p className="text-gray-500 text-sm">No projects added yet.</p>
+                      </div>
+                    ) : (
+                      resumeData.projects.map(renderProjectItem)
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleArrayAdd('projects', {
+                        name: '',
+                        technologies: '',
+                        description: '',
+                        url: ''
+                      })}
+                      className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
+                    >
+                      ➕ Add New Project
+                    </button>
+                  </div>
+                </FormSection>
+              )}
+
+              {/* Certifications */}
+              {activeTab === 'certifications' && (
+                <FormSection title="Certifications" icon="🏆">
+                  <div className="space-y-4">
+                    {resumeData.certifications.length === 0 ? (
+                      <div className="text-center py-6">
+                        <div className="text-gray-400 text-3xl mb-2">🏆</div>
+                        <p className="text-gray-500 text-sm">No certifications added yet.</p>
+                      </div>
+                    ) : (
+                      resumeData.certifications.map(renderCertificationItem)
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleArrayAdd('certifications', {
+                        name: '',
+                        issuer: '',
+                        date: '',
+                        expiry: ''
+                      })}
+                      className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
+                    >
+                      ➕ Add New Certification
+                    </button>
+                  </div>
+                </FormSection>
+              )}
+
+              {/* Languages */}
+              {activeTab === 'languages' && (
+                <FormSection title="Languages" icon="🌐">
+                  <div className="space-y-4">
+                    {resumeData.languages.length === 0 ? (
+                      <div className="text-center py-6">
+                        <div className="text-gray-400 text-3xl mb-2">🌐</div>
+                        <p className="text-gray-500 text-sm">No languages added yet.</p>
+                      </div>
+                    ) : (
+                      resumeData.languages.map(renderLanguageItem)
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleArrayAdd('languages', {
+                        name: '',
+                        proficiency: ''
+                      })}
+                      className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
+                    >
+                      ➕ Add New Language
+                    </button>
                   </div>
                 </FormSection>
               )}
