@@ -21,15 +21,8 @@ import {
   FaFilePdf,
   FaPalette,
   FaPrint,
-  FaMagic,
-  FaStar,
-  FaRocket,
   FaGlobe,
-  FaCertificate,
-  FaPaintBrush,
-  FaCrown,
-  FaLaptop,
-  FaBusinessTime
+  FaCertificate
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../App';
@@ -66,14 +59,13 @@ const generatePDF = (element, filename) => {
           text-align: center; 
           margin-bottom: 25px; 
           padding-bottom: 20px; 
-          border-bottom: 3px solid #2b6cb0;
+          border-bottom: 2px solid #2b6cb0;
         }
         .name { 
           font-size: 28px; 
           font-weight: 700; 
           color: #2d3748; 
           margin-bottom: 8px;
-          letter-spacing: -0.5px;
         }
         .contact-info { 
           color: #718096; 
@@ -85,33 +77,31 @@ const generatePDF = (element, filename) => {
           margin-bottom: 22px; 
         }
         .section-title { 
-          font-size: 18px; 
-          font-weight: 700; 
+          font-size: 16px; 
+          font-weight: 600; 
           color: #2b6cb0; 
-          border-bottom: 2px solid #e2e8f0; 
+          border-bottom: 1px solid #e2e8f0; 
           padding-bottom: 6px; 
           margin-bottom: 12px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
         }
         .experience-item, .education-item { 
           margin-bottom: 16px; 
           padding-left: 15px;
-          border-left: 3px solid #bee3f8;
+          border-left: 2px solid #bee3f8;
         }
         .job-title { 
           font-weight: 600; 
           color: #2d3748; 
-          font-size: 16px;
+          font-size: 15px;
         }
         .company { 
           color: #4a5568; 
           font-weight: 500;
-          font-style: normal;
         }
         .date { 
           color: #718096; 
-          font-size: 14px; 
+          font-size: 13px; 
           margin: 4px 0;
         }
         .skills { 
@@ -123,16 +113,16 @@ const generatePDF = (element, filename) => {
         .skill-tag { 
           background: #ebf8ff; 
           color: #2b6cb0; 
-          padding: 6px 12px; 
-          border-radius: 20px; 
-          font-size: 13px;
+          padding: 4px 10px; 
+          border-radius: 12px; 
+          font-size: 12px;
           font-weight: 500;
-          border: 1px solid #bee3f8;
         }
         .description {
           color: #4a5568;
-          line-height: 1.6;
-          margin-top: 8px;
+          line-height: 1.5;
+          margin-top: 6px;
+          font-size: 14px;
         }
         @media print {
           body { margin: 0.4in; }
@@ -167,12 +157,12 @@ const generatePDF = (element, filename) => {
 const InputField = React.memo(({ label, value, onChange, type = 'text', placeholder, className = '' }) => {
   return (
     <div className={className}>
-      <label className="block text-gray-700 mb-3 text-sm font-semibold uppercase tracking-wide">{label}</label>
+      <label className="block text-gray-700 mb-2 text-sm font-medium">{label}</label>
       <input
         type={type}
         value={value}
         onChange={onChange}
-        className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-300 bg-white shadow-sm hover:shadow-md focus:shadow-lg"
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 bg-white"
         placeholder={placeholder}
       />
     </div>
@@ -182,12 +172,12 @@ const InputField = React.memo(({ label, value, onChange, type = 'text', placehol
 const TextAreaField = React.memo(({ label, value, onChange, rows = 4, placeholder, className = '' }) => {
   return (
     <div className={className}>
-      <label className="block text-gray-700 mb-3 text-sm font-semibold uppercase tracking-wide">{label}</label>
+      <label className="block text-gray-700 mb-2 text-sm font-medium">{label}</label>
       <textarea
         value={value}
         onChange={onChange}
         rows={rows}
-        className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none transition-all duration-300 bg-white shadow-sm hover:shadow-md focus:shadow-lg"
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none transition-all duration-200 bg-white"
         placeholder={placeholder}
       />
     </div>
@@ -218,43 +208,35 @@ const ResumeBuilder = ({ token }) => {
   const [templates] = useState([
     {
       id: 1,
-      name: 'Modern Pro',
-      description: 'Clean, modern and professional design',
-      category: 'Professional',
-      style: 'modern',
-      preview: 'bg-gradient-to-br from-blue-600 to-cyan-500',
-      icon: <FaBusinessTime className="text-white" />,
-      premium: false
+      name: 'Professional',
+      description: 'Clean and professional design',
+      style: 'professional',
+      preview: 'bg-gradient-to-br from-blue-500 to-blue-700',
+      icon: '👔'
     },
     {
       id: 2,
-      name: 'Executive',
-      description: 'Sophisticated layout for senior roles',
-      category: 'Executive',
-      style: 'executive',
-      preview: 'bg-gradient-to-br from-gray-700 to-blue-600',
-      icon: <FaCrown className="text-white" />,
-      premium: true
+      name: 'Modern',
+      description: 'Contemporary layout',
+      style: 'modern',
+      preview: 'bg-gradient-to-br from-gray-600 to-gray-800',
+      icon: '💼'
     },
     {
       id: 3,
-      name: 'Creative',
-      description: 'Modern design for creative professionals',
-      category: 'Creative',
-      style: 'creative',
-      preview: 'bg-gradient-to-br from-purple-600 to-pink-500',
-      icon: <FaPaintBrush className="text-white" />,
-      premium: false
+      name: 'Minimal',
+      description: 'Simple and clean',
+      style: 'minimal',
+      preview: 'bg-gradient-to-br from-green-500 to-green-700',
+      icon: '📄'
     },
     {
       id: 4,
-      name: 'Tech Pro',
-      description: 'Designed for tech professionals',
-      category: 'Technical',
-      style: 'tech',
-      preview: 'bg-gradient-to-br from-green-600 to-teal-500',
-      icon: <FaLaptop className="text-white" />,
-      premium: true
+      name: 'Creative',
+      description: 'Modern creative design',
+      style: 'creative',
+      preview: 'bg-gradient-to-br from-purple-500 to-purple-700',
+      icon: '🎨'
     }
   ]);
 
@@ -334,70 +316,70 @@ const ResumeBuilder = ({ token }) => {
     
     const getTemplateStyle = () => {
       switch(template.style) {
+        case 'professional':
+          return `
+            .resume-container { max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #2b6cb0; }
+            .name { font-size: 26px; font-weight: 700; color: #2d3748; margin-bottom: 6px; }
+            .contact-info { color: #718096; font-size: 14px; line-height: 1.6; }
+            .section { margin-bottom: 20px; }
+            .section-title { font-size: 16px; font-weight: 600; color: #2b6cb0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 12px; }
+            .experience-item, .education-item { margin-bottom: 16px; padding-left: 15px; border-left: 2px solid #bee3f8; }
+            .job-title { font-weight: 600; color: #2d3748; font-size: 15px; }
+            .company { color: #4a5568; font-weight: 500; }
+            .skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+            .skill-tag { background: #ebf8ff; color: #2b6cb0; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+          `;
         case 'modern':
           return `
             .resume-container { max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #2b6cb0; }
-            .name { font-size: 32px; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
-            .contact-info { color: #718096; font-size: 15px; line-height: 1.8; }
-            .section { margin-bottom: 25px; }
-            .section-title { font-size: 18px; font-weight: 700; color: #2b6cb0; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 15px; text-transform: uppercase; }
-            .experience-item, .education-item { margin-bottom: 20px; padding-left: 20px; border-left: 3px solid #bee3f8; }
-            .job-title { font-weight: 600; color: #2d3748; font-size: 16px; }
-            .company { color: #4a5568; font-weight: 500; }
-            .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-            .skill-tag { background: #ebf8ff; color: #2b6cb0; padding: 6px 12px; border-radius: 20px; font-size: 13px; border: 1px solid #bee3f8; }
-          `;
-        case 'executive':
-          return `
-            .resume-container { max-width: 800px; margin: 0 auto; font-family: 'Georgia', serif; }
-            .header { text-align: center; margin-bottom: 40px; padding-bottom: 25px; border-bottom: 2px solid #2d3748; }
-            .name { font-size: 36px; font-weight: 300; color: #2d3748; margin-bottom: 10px; letter-spacing: 1px; }
-            .contact-info { color: #718096; font-size: 16px; letter-spacing: 0.5px; }
-            .section { margin-bottom: 30px; }
-            .section-title { font-size: 20px; font-weight: 600; color: #2d3748; border-bottom: 1px solid #cbd5e0; padding-bottom: 8px; margin-bottom: 18px; }
-            .experience-item, .education-item { margin-bottom: 25px; }
-            .job-title { font-weight: 600; color: #2d3748; font-style: italic; }
+            .header { text-align: left; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+            .name { font-size: 24px; font-weight: 700; color: #2d3748; margin-bottom: 6px; }
+            .contact-info { color: #718096; font-size: 14px; line-height: 1.6; }
+            .section { margin-bottom: 20px; }
+            .section-title { font-size: 15px; font-weight: 600; color: #4a5568; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 12px; }
+            .experience-item, .education-item { margin-bottom: 16px; }
+            .job-title { font-weight: 600; color: #2d3748; font-size: 15px; }
             .company { color: #718096; font-weight: 500; }
             .skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-            .skill-tag { background: #f7fafc; color: #4a5568; padding: 4px 10px; border-radius: 3px; font-size: 12px; border: 1px solid #e2e8f0; }
+            .skill-tag { background: #f7fafc; color: #4a5568; padding: 4px 10px; border-radius: 8px; font-size: 12px; border: 1px solid #e2e8f0; }
+          `;
+        case 'minimal':
+          return `
+            .resume-container { max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 25px; }
+            .name { font-size: 24px; font-weight: 600; color: #2d3748; margin-bottom: 6px; }
+            .contact-info { color: #718096; font-size: 14px; line-height: 1.6; }
+            .section { margin-bottom: 20px; }
+            .section-title { font-size: 15px; font-weight: 600; color: #38a169; margin-bottom: 10px; }
+            .experience-item, .education-item { margin-bottom: 16px; }
+            .job-title { font-weight: 600; color: #2d3748; font-size: 15px; }
+            .company { color: #4a5568; font-weight: 500; }
+            .skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+            .skill-tag { background: #f0fff4; color: #38a169; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
           `;
         case 'creative':
           return `
-            .resume-container { max-width: 800px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 20px; }
-            .header { text-align: center; margin-bottom: 30px; color: white; }
-            .name { font-size: 34px; font-weight: 800; color: white; margin-bottom: 10px; }
-            .contact-info { color: rgba(255,255,255,0.8); font-size: 15px; }
-            .section { margin-bottom: 25px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-            .section-title { font-size: 20px; font-weight: 700; color: #667eea; margin-bottom: 15px; }
-            .experience-item, .education-item { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
-            .job-title { font-weight: 600; color: #2d3748; font-size: 16px; }
+            .resume-container { max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; }
+            .name { font-size: 26px; font-weight: 700; color: white; margin-bottom: 6px; }
+            .contact-info { color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; }
+            .section { margin-bottom: 20px; }
+            .section-title { font-size: 16px; font-weight: 600; color: #667eea; margin-bottom: 12px; }
+            .experience-item, .education-item { margin-bottom: 16px; padding: 15px; background: #f8f9ff; border-radius: 8px; }
+            .job-title { font-weight: 600; color: #2d3748; font-size: 15px; }
             .company { color: #667eea; font-weight: 500; }
-            .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-            .skill-tag { background: #667eea; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
-          `;
-        case 'tech':
-          return `
-            .resume-container { max-width: 800px; margin: 0 auto; background: #1a202c; color: white; padding: 40px; border-radius: 10px; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #38b2ac; padding-bottom: 20px; }
-            .name { font-size: 32px; font-weight: 700; color: white; margin-bottom: 8px; }
-            .contact-info { color: #a0aec0; font-size: 15px; }
-            .section { margin-bottom: 25px; }
-            .section-title { font-size: 18px; font-weight: 700; color: #38b2ac; border-bottom: 1px solid #2d3748; padding-bottom: 6px; margin-bottom: 15px; text-transform: uppercase; }
-            .experience-item, .education-item { margin-bottom: 20px; padding-left: 20px; border-left: 3px solid #38b2ac; }
-            .job-title { font-weight: 600; color: white; font-size: 16px; }
-            .company { color: #38b2ac; font-weight: 500; }
-            .skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-            .skill-tag { background: #2d3748; color: #38b2ac; padding: 6px 12px; border-radius: 5px; font-size: 13px; border: 1px solid #38b2ac; font-family: 'Courier New', monospace; }
+            .skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+            .skill-tag { background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
           `;
         default:
           return `
             .resume-container { max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .name { font-size: 32px; font-weight: 700; color: #2d3748; }
-            .contact-info { color: #718096; font-size: 15px; }
-            .section { margin-bottom: 25px; }
-            .section-title { font-size: 18px; font-weight: 700; color: #2b6cb0; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 15px; }
+            .header { text-align: center; margin-bottom: 25px; }
+            .name { font-size: 26px; font-weight: 700; color: #2d3748; }
+            .contact-info { color: #718096; font-size: 14px; }
+            .section { margin-bottom: 20px; }
+            .section-title { font-size: 16px; font-weight: 600; color: #2b6cb0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 12px; }
           `;
       }
     };
@@ -412,7 +394,7 @@ const ResumeBuilder = ({ token }) => {
           body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             margin: 40px; 
-            line-height: 1.6; 
+            line-height: 1.5; 
             color: #1a202c;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
@@ -420,8 +402,9 @@ const ResumeBuilder = ({ token }) => {
           ${getTemplateStyle()}
           .description {
             color: #4a5568;
-            line-height: 1.6;
-            margin-top: 8px;
+            line-height: 1.5;
+            margin-top: 6px;
+            font-size: 14px;
           }
           @media print {
             body { margin: 0.4in; }
@@ -548,10 +531,10 @@ const ResumeBuilder = ({ token }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-100"
+      className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
     >
-      <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-4">
-        <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
           {icon}
         </div>
         {title}
@@ -562,38 +545,28 @@ const ResumeBuilder = ({ token }) => {
 
   // Enhanced Template Selector
   const TemplateSelector = useCallback(({ selected, onSelect }) => (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3">
       {templates.map(template => (
         <motion.div
           key={template.id}
-          whileHover={{ scale: 1.02, y: -5 }}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onSelect(template.id)}
-          className={`relative rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden group ${
+          className={`relative rounded-lg cursor-pointer transition-all duration-200 overflow-hidden group ${
             selected === template.id
-              ? 'ring-4 ring-blue-500 shadow-2xl'
-              : 'shadow-xl hover:shadow-2xl'
+              ? 'ring-2 ring-blue-500 shadow-md'
+              : 'shadow-sm hover:shadow-md'
           }`}
         >
-          <div className={`w-full h-24 ${template.preview} flex items-center justify-center relative`}>
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
-            <div className="text-white text-2xl z-10">
+          <div className={`w-full h-16 ${template.preview} flex items-center justify-center relative`}>
+            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
+            <div className="text-white text-xl z-10">
               {template.icon}
             </div>
-            {template.premium && (
-              <div className="absolute top-3 right-3 bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-xs font-bold">
-                PRO
-              </div>
-            )}
           </div>
-          <div className="p-4 bg-white">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-bold text-gray-800 text-sm">{template.name}</h4>
-              {selected === template.id && (
-                <FaStar className="text-yellow-400 text-sm" />
-              )}
-            </div>
-            <p className="text-gray-600 text-xs leading-relaxed">{template.description}</p>
+          <div className="p-3 bg-white">
+            <h4 className="font-medium text-gray-800 text-sm">{template.name}</h4>
+            <p className="text-gray-600 text-xs mt-1">{template.description}</p>
           </div>
         </motion.div>
       ))}
@@ -602,14 +575,14 @@ const ResumeBuilder = ({ token }) => {
 
   // Navigation tabs
   const navigationTabs = useMemo(() => [
-    { id: 'personal', label: 'Personal', icon: <FaUser /> },
-    { id: 'summary', label: 'Summary', icon: <FaBriefcase /> },
-    { id: 'experience', label: 'Experience', icon: <FaBriefcase /> },
-    { id: 'education', label: 'Education', icon: <FaGraduationCap /> },
-    { id: 'skills', label: 'Skills', icon: <FaTools /> },
-    { id: 'projects', label: 'Projects', icon: <FaAward /> },
-    { id: 'certifications', label: 'Certifications', icon: <FaCertificate /> },
-    { id: 'languages', label: 'Languages', icon: <FaLanguage /> }
+    { id: 'personal', label: 'Personal', icon: <FaUser size={14} /> },
+    { id: 'summary', label: 'Summary', icon: <FaBriefcase size={14} /> },
+    { id: 'experience', label: 'Experience', icon: <FaBriefcase size={14} /> },
+    { id: 'education', label: 'Education', icon: <FaGraduationCap size={14} /> },
+    { id: 'skills', label: 'Skills', icon: <FaTools size={14} /> },
+    { id: 'projects', label: 'Projects', icon: <FaAward size={14} /> },
+    { id: 'certifications', label: 'Certifications', icon: <FaCertificate size={14} /> },
+    { id: 'languages', label: 'Languages', icon: <FaLanguage size={14} /> }
   ], []);
 
   // Render functions for all sections
@@ -618,9 +591,9 @@ const ResumeBuilder = ({ token }) => {
       key={exp.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border-2 border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white"
+      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <InputField
           label="Position"
           value={exp.position}
@@ -639,7 +612,7 @@ const ResumeBuilder = ({ token }) => {
           onChange={(e) => handleArrayUpdate('experience', exp.id, 'location', e.target.value)}
           placeholder="e.g., Remote, San Francisco, CA"
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <InputField
             label="Start Date"
             type="month"
@@ -665,21 +638,21 @@ const ResumeBuilder = ({ token }) => {
         placeholder="Describe your responsibilities and achievements..."
       />
       
-      <div className="flex justify-between items-center mt-4">
-        <label className="flex items-center gap-3 text-sm cursor-pointer">
+      <div className="flex justify-between items-center mt-3">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
             checked={exp.current}
             onChange={(e) => handleArrayUpdate('experience', exp.id, 'current', e.target.checked)}
             className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
           />
-          <span className="text-gray-700 font-medium">I currently work here</span>
+          <span className="text-gray-700">I currently work here</span>
         </label>
         <button
           onClick={() => handleArrayRemove('experience', exp.id)}
-          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors bg-red-50 px-4 py-2 rounded-xl"
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
         >
-          <FaTrash className="text-sm" />
+          <FaTrash size={12} />
           Remove
         </button>
       </div>
@@ -691,9 +664,9 @@ const ResumeBuilder = ({ token }) => {
       key={edu.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border-2 border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white"
+      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <InputField
           label="Degree"
           value={edu.degree}
@@ -712,7 +685,7 @@ const ResumeBuilder = ({ token }) => {
           onChange={(e) => handleArrayUpdate('education', edu.id, 'location', e.target.value)}
           placeholder="e.g., Stanford, CA"
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <InputField
             label="Start Date"
             type="month"
@@ -738,21 +711,21 @@ const ResumeBuilder = ({ token }) => {
         placeholder="Relevant coursework, achievements, or honors..."
       />
       
-      <div className="flex justify-between items-center mt-4">
-        <label className="flex items-center gap-3 text-sm cursor-pointer">
+      <div className="flex justify-between items-center mt-3">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
             checked={edu.current}
             onChange={(e) => handleArrayUpdate('education', edu.id, 'current', e.target.checked)}
             className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
           />
-          <span className="text-gray-700 font-medium">Currently studying here</span>
+          <span className="text-gray-700">Currently studying here</span>
         </label>
         <button
           onClick={() => handleArrayRemove('education', edu.id)}
-          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors bg-red-50 px-4 py-2 rounded-xl"
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
         >
-          <FaTrash className="text-sm" />
+          <FaTrash size={12} />
           Remove
         </button>
       </div>
@@ -764,9 +737,9 @@ const ResumeBuilder = ({ token }) => {
       key={skill.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border-2 border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white"
+      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <InputField
           label="Skill Name"
           value={skill.name}
@@ -786,12 +759,12 @@ const ResumeBuilder = ({ token }) => {
           placeholder="e.g., Technical, Soft Skills"
         />
       </div>
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end mt-3">
         <button
           onClick={() => handleArrayRemove('skills', skill.id)}
-          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors bg-red-50 px-4 py-2 rounded-xl"
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
         >
-          <FaTrash className="text-sm" />
+          <FaTrash size={12} />
           Remove
         </button>
       </div>
@@ -803,9 +776,9 @@ const ResumeBuilder = ({ token }) => {
       key={project.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border-2 border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white"
+      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <InputField
           label="Project Name"
           value={project.name}
@@ -835,12 +808,12 @@ const ResumeBuilder = ({ token }) => {
         placeholder="Describe the project, your role, and key achievements..."
       />
       
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end mt-3">
         <button
           onClick={() => handleArrayRemove('projects', project.id)}
-          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors bg-red-50 px-4 py-2 rounded-xl"
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
         >
-          <FaTrash className="text-sm" />
+          <FaTrash size={12} />
           Remove
         </button>
       </div>
@@ -852,9 +825,9 @@ const ResumeBuilder = ({ token }) => {
       key={cert.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border-2 border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white"
+      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <InputField
           label="Certification Name"
           value={cert.name}
@@ -881,12 +854,12 @@ const ResumeBuilder = ({ token }) => {
           placeholder="Leave empty if no expiry"
         />
       </div>
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end mt-3">
         <button
           onClick={() => handleArrayRemove('certifications', cert.id)}
-          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors bg-red-50 px-4 py-2 rounded-xl"
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
         >
-          <FaTrash className="text-sm" />
+          <FaTrash size={12} />
           Remove
         </button>
       </div>
@@ -898,9 +871,9 @@ const ResumeBuilder = ({ token }) => {
       key={lang.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="border-2 border-gray-100 rounded-2xl p-6 bg-gradient-to-br from-gray-50 to-white"
+      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <InputField
           label="Language"
           value={lang.name}
@@ -914,12 +887,12 @@ const ResumeBuilder = ({ token }) => {
           placeholder="e.g., Native, Fluent, Intermediate, Basic"
         />
       </div>
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end mt-3">
         <button
           onClick={() => handleArrayRemove('languages', lang.id)}
-          className="text-red-500 hover:text-red-700 flex items-center gap-2 text-sm font-medium transition-colors bg-red-50 px-4 py-2 rounded-xl"
+          className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm transition-colors"
         >
-          <FaTrash className="text-sm" />
+          <FaTrash size={12} />
           Remove
         </button>
       </div>
@@ -927,38 +900,34 @@ const ResumeBuilder = ({ token }) => {
   ), [handleArrayUpdate, handleArrayRemove]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Enhanced Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
+      {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -30 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/80 backdrop-blur-lg border-b border-gray-200"
+        className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl mb-6"
       >
-        <div className="max-w-8xl mx-auto px-6 py-8">
+        <div className="px-6 py-6">
           <div className="text-center">
-            <div className="inline-flex items-center gap-3 mb-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
-              <FaRocket className="text-xl" />
-              <span className="text-sm font-semibold">PROFESSIONAL RESUME BUILDER</span>
-            </div>
-            <h1 className="text-5xl font-bold text-gray-800 mb-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
               Create Your
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Perfect Resume</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-gray-600 max-w-2xl mx-auto">
               Build professional, ATS-friendly resumes that stand out. 
-              <span className="text-blue-600 font-semibold"> Download instantly as PDF.</span>
+              <span className="text-blue-600 font-medium"> Download instantly as PDF.</span>
             </p>
           </div>
         </div>
       </motion.div>
 
-      <div className="max-w-8xl mx-auto p-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Form Input */}
-          <div className="xl:col-span-2 space-y-8">
-            {/* Enhanced Navigation Tabs */}
+          <div className="space-y-6">
+            {/* Navigation Tabs */}
             <motion.div 
-              className="bg-white rounded-2xl p-4 shadow-2xl border border-gray-100"
+              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -967,10 +936,10 @@ const ResumeBuilder = ({ token }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-3 px-6 py-4 rounded-xl transition-all duration-300 text-sm font-semibold ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800 border-2 border-transparent hover:border-gray-200'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                     }`}
                   >
                     {tab.icon}
@@ -987,13 +956,13 @@ const ResumeBuilder = ({ token }) => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-8"
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
               >
                 {/* Personal Information Section */}
                 {activeTab === 'personal' && (
                   <FormSection title="Personal Information" icon={<FaUser />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InputField
                         label="Full Name"
                         value={resumeData.personal.fullName}
@@ -1050,15 +1019,12 @@ const ResumeBuilder = ({ token }) => {
                       label="Summary"
                       value={resumeData.summary}
                       onChange={(e) => handleSummaryChange(e.target.value)}
-                      rows={6}
+                      rows={5}
                       placeholder="Describe your professional background, key skills, and career objectives..."
                     />
-                    <div className="flex justify-between items-center mt-4">
+                    <div className="flex justify-between items-center mt-3">
                       <p className="text-xs text-gray-500">
                         {resumeData.summary.length}/500 characters
-                      </p>
-                      <p className="text-xs text-blue-500 font-semibold">
-                        Write a compelling summary that highlights your expertise
                       </p>
                     </div>
                   </FormSection>
@@ -1069,9 +1035,9 @@ const ResumeBuilder = ({ token }) => {
                   <FormSection title="Work Experience" icon={<FaBriefcase />}>
                     <div className="space-y-4">
                       {resumeData.experience.length === 0 ? (
-                        <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">💼</div>
-                          <p className="text-gray-500 text-sm">No work experience added yet. Start by adding your first job experience.</p>
+                        <div className="text-center py-6">
+                          <div className="text-gray-400 text-3xl mb-2">💼</div>
+                          <p className="text-gray-500 text-sm">No work experience added yet.</p>
                         </div>
                       ) : (
                         resumeData.experience.map((exp, index) => renderExperienceItem(exp, index))
@@ -1087,10 +1053,10 @@ const ResumeBuilder = ({ token }) => {
                           description: '',
                           current: false
                         })}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                        className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
                       >
-                        <FaPlus className="text-lg" />
-                        <span className="font-semibold">Add New Experience</span>
+                        <FaPlus size={14} />
+                        <span className="font-medium">Add New Experience</span>
                       </button>
                     </div>
                   </FormSection>
@@ -1101,9 +1067,9 @@ const ResumeBuilder = ({ token }) => {
                   <FormSection title="Education" icon={<FaGraduationCap />}>
                     <div className="space-y-4">
                       {resumeData.education.length === 0 ? (
-                        <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">🎓</div>
-                          <p className="text-gray-500 text-sm">No education history added yet. Add your educational background.</p>
+                        <div className="text-center py-6">
+                          <div className="text-gray-400 text-3xl mb-2">🎓</div>
+                          <p className="text-gray-500 text-sm">No education history added yet.</p>
                         </div>
                       ) : (
                         resumeData.education.map((edu, index) => renderEducationItem(edu, index))
@@ -1119,10 +1085,10 @@ const ResumeBuilder = ({ token }) => {
                           description: '',
                           current: false
                         })}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                        className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
                       >
-                        <FaPlus className="text-lg" />
-                        <span className="font-semibold">Add New Education</span>
+                        <FaPlus size={14} />
+                        <span className="font-medium">Add New Education</span>
                       </button>
                     </div>
                   </FormSection>
@@ -1133,9 +1099,9 @@ const ResumeBuilder = ({ token }) => {
                   <FormSection title="Skills" icon={<FaTools />}>
                     <div className="space-y-4">
                       {resumeData.skills.length === 0 ? (
-                        <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">🛠️</div>
-                          <p className="text-gray-500 text-sm">No skills added yet. Add your technical and professional skills.</p>
+                        <div className="text-center py-6">
+                          <div className="text-gray-400 text-3xl mb-2">🛠️</div>
+                          <p className="text-gray-500 text-sm">No skills added yet.</p>
                         </div>
                       ) : (
                         resumeData.skills.map((skill, index) => renderSkillItem(skill, index))
@@ -1147,10 +1113,10 @@ const ResumeBuilder = ({ token }) => {
                           level: '',
                           category: ''
                         })}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                        className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
                       >
-                        <FaPlus className="text-lg" />
-                        <span className="font-semibold">Add New Skill</span>
+                        <FaPlus size={14} />
+                        <span className="font-medium">Add New Skill</span>
                       </button>
                     </div>
                   </FormSection>
@@ -1161,9 +1127,9 @@ const ResumeBuilder = ({ token }) => {
                   <FormSection title="Projects" icon={<FaAward />}>
                     <div className="space-y-4">
                       {resumeData.projects.length === 0 ? (
-                        <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">🚀</div>
-                          <p className="text-gray-500 text-sm">No projects added yet. Showcase your personal or professional projects.</p>
+                        <div className="text-center py-6">
+                          <div className="text-gray-400 text-3xl mb-2">🚀</div>
+                          <p className="text-gray-500 text-sm">No projects added yet.</p>
                         </div>
                       ) : (
                         resumeData.projects.map((project, index) => renderProjectItem(project, index))
@@ -1176,10 +1142,10 @@ const ResumeBuilder = ({ token }) => {
                           description: '',
                           url: ''
                         })}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                        className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
                       >
-                        <FaPlus className="text-lg" />
-                        <span className="font-semibold">Add New Project</span>
+                        <FaPlus size={14} />
+                        <span className="font-medium">Add New Project</span>
                       </button>
                     </div>
                   </FormSection>
@@ -1190,9 +1156,9 @@ const ResumeBuilder = ({ token }) => {
                   <FormSection title="Certifications" icon={<FaCertificate />}>
                     <div className="space-y-4">
                       {resumeData.certifications.length === 0 ? (
-                        <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">🏆</div>
-                          <p className="text-gray-500 text-sm">No certifications added yet. Add your professional certifications.</p>
+                        <div className="text-center py-6">
+                          <div className="text-gray-400 text-3xl mb-2">🏆</div>
+                          <p className="text-gray-500 text-sm">No certifications added yet.</p>
                         </div>
                       ) : (
                         resumeData.certifications.map((cert, index) => renderCertificationItem(cert, index))
@@ -1205,10 +1171,10 @@ const ResumeBuilder = ({ token }) => {
                           date: '',
                           expiry: ''
                         })}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                        className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
                       >
-                        <FaPlus className="text-lg" />
-                        <span className="font-semibold">Add New Certification</span>
+                        <FaPlus size={14} />
+                        <span className="font-medium">Add New Certification</span>
                       </button>
                     </div>
                   </FormSection>
@@ -1219,9 +1185,9 @@ const ResumeBuilder = ({ token }) => {
                   <FormSection title="Languages" icon={<FaLanguage />}>
                     <div className="space-y-4">
                       {resumeData.languages.length === 0 ? (
-                        <div className="text-center py-8">
-                          <div className="text-gray-400 text-4xl mb-3">🌐</div>
-                          <p className="text-gray-500 text-sm">No languages added yet. Add languages you speak.</p>
+                        <div className="text-center py-6">
+                          <div className="text-gray-400 text-3xl mb-2">🌐</div>
+                          <p className="text-gray-500 text-sm">No languages added yet.</p>
                         </div>
                       ) : (
                         resumeData.languages.map((lang, index) => renderLanguageItem(lang, index))
@@ -1232,10 +1198,10 @@ const ResumeBuilder = ({ token }) => {
                           name: '',
                           proficiency: ''
                         })}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-300 flex items-center justify-center gap-3 bg-white/50 hover:bg-blue-50"
+                        className="w-full py-3 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition-all duration-200 flex items-center justify-center gap-2 bg-white/50 hover:bg-blue-50"
                       >
-                        <FaPlus className="text-lg" />
-                        <span className="font-semibold">Add New Language</span>
+                        <FaPlus size={14} />
+                        <span className="font-medium">Add New Language</span>
                       </button>
                     </div>
                   </FormSection>
@@ -1245,16 +1211,16 @@ const ResumeBuilder = ({ token }) => {
           </div>
 
           {/* Right Panel - Preview & Templates */}
-          <div className="xl:col-span-1 space-y-8">
+          <div className="space-y-6">
             {/* Template Selection */}
             <FormSection title="Choose Template" icon={<FaPalette />}>
               <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
             </FormSection>
 
-            {/* Enhanced Live Preview */}
+            {/* Live Preview */}
             <FormSection title="Live Preview" icon={<FaEye />}>
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-1 shadow-2xl">
-                <div className="bg-white rounded-xl min-h-[600px] max-h-[700px] overflow-y-auto shadow-inner">
+              <div className="bg-gray-100 rounded-lg p-2">
+                <div className="bg-white rounded-lg min-h-[600px] max-h-[700px] overflow-y-auto shadow-inner">
                   <div 
                     id="resume-preview"
                     className="p-6"
@@ -1264,31 +1230,31 @@ const ResumeBuilder = ({ token }) => {
               </div>
             </FormSection>
 
-            {/* Enhanced Quick Actions */}
+            {/* Quick Actions */}
             <FormSection title="Quick Actions" icon={<FaRocket />}>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button
                   onClick={() => {
                     const name = prompt('Enter resume name:', `${resumeData.personal.fullName || 'My'} Resume`);
                     if (name) saveResume(name);
                   }}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 shadow-lg"
+                  className="w-full bg-blue-500 text-white py-3 rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <FaSave className="text-lg" />
+                  <FaSave size={14} />
                   {loading ? 'Saving...' : 'Save Resume'}
                 </button>
                 
                 <button
                   onClick={downloadResumePDF}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 rounded-xl text-sm font-semibold hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 shadow-lg"
+                  className="w-full bg-green-500 text-white py-3 rounded-lg text-sm font-medium hover:bg-green-600 transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <FaPrint className="text-lg" />
+                  <FaPrint size={14} />
                   Download as PDF
                 </button>
 
                 {lastSave && (
-                  <div className="text-center text-sm text-green-600 bg-green-50 rounded-xl p-3 border border-green-200">
+                  <div className="text-center text-sm text-green-600 bg-green-50 rounded-lg p-2 border border-green-200">
                     ✅ Last saved: {lastSave.toLocaleTimeString()}
                   </div>
                 )}
