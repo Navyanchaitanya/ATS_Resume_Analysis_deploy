@@ -1,7 +1,7 @@
 // frontend/src/components/ResumeBuilder.jsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 
-// Simple input components without React.memo to avoid potential issues
+// ATS-optimized input components
 const InputField = ({ label, value, onChange, type = 'text', placeholder, className = '' }) => {
   return (
     <div className={className}>
@@ -53,38 +53,39 @@ const ResumeBuilder = () => {
     languages: []
   });
 
+  // ATS-optimized templates
   const [templates] = useState([
     {
       id: 1,
-      name: 'Professional',
-      description: 'Clean and professional design',
-      style: 'professional',
-      preview: 'bg-gradient-to-br from-blue-500 to-blue-700',
-      icon: '👔'
+      name: 'ATS Professional',
+      description: 'Optimized for Applicant Tracking Systems',
+      style: 'ats-professional',
+      preview: 'bg-gradient-to-br from-blue-600 to-blue-800',
+      icon: '📄'
     },
     {
       id: 2,
-      name: 'Modern',
-      description: 'Contemporary layout',
-      style: 'modern',
-      preview: 'bg-gradient-to-br from-gray-600 to-gray-800',
+      name: 'Modern Classic',
+      description: 'Clean, modern design',
+      style: 'modern-classic',
+      preview: 'bg-gradient-to-br from-gray-700 to-gray-900',
       icon: '💼'
     },
     {
       id: 3,
-      name: 'Minimal',
-      description: 'Simple and clean',
-      style: 'minimal',
-      preview: 'bg-gradient-to-br from-green-500 to-green-700',
-      icon: '📄'
+      name: 'Executive',
+      description: 'Professional executive style',
+      style: 'executive',
+      preview: 'bg-gradient-to-br from-green-600 to-green-800',
+      icon: '👔'
     },
     {
       id: 4,
-      name: 'Creative',
-      description: 'Modern creative design',
-      style: 'creative',
-      preview: 'bg-gradient-to-br from-purple-500 to-purple-700',
-      icon: '🎨'
+      name: 'Minimalist',
+      description: 'Simple and clean layout',
+      style: 'minimalist',
+      preview: 'bg-gradient-to-br from-purple-600 to-purple-800',
+      icon: '🎯'
     }
   ]);
 
@@ -133,7 +134,6 @@ const ResumeBuilder = () => {
   const saveResume = async (resumeName = 'My Resume') => {
     try {
       setLoading(true);
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       setLastSave(new Date());
       console.log('Resume saved successfully!');
@@ -145,100 +145,481 @@ const ResumeBuilder = () => {
     }
   };
 
+  // Enhanced PDF generation with ATS optimization
   const downloadResumePDF = () => {
     const element = document.getElementById('resume-preview');
     if (!element) {
       alert('Preview not available. Please check the preview section.');
       return;
     }
-    
-    // Simple print functionality
+
     const printWindow = window.open('', '_blank');
+    const template = templates.find(t => t.id === selectedTemplate);
+    
+    // Get template-specific styles
+    const getTemplateStyles = () => {
+      switch(template.style) {
+        case 'ats-professional':
+          return `
+            body { 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
+              margin: 0.5in; 
+              line-height: 1.4; 
+              color: #000000;
+              font-size: 11pt;
+            }
+            .resume-container { max-width: 100%; }
+            .header { 
+              text-align: center; 
+              margin-bottom: 20px; 
+              padding-bottom: 15px; 
+              border-bottom: 2px solid #2c5282;
+            }
+            .name { 
+              font-size: 18pt; 
+              font-weight: bold; 
+              color: #000000; 
+              margin-bottom: 5px;
+              text-transform: uppercase;
+            }
+            .contact-info { 
+              color: #4a5568; 
+              font-size: 10pt;
+              margin-bottom: 10px;
+            }
+            .section { 
+              margin-bottom: 15px; 
+            }
+            .section-title { 
+              font-size: 12pt; 
+              font-weight: bold; 
+              color: #2c5282; 
+              border-bottom: 1px solid #cbd5e0; 
+              padding-bottom: 3px; 
+              margin-bottom: 8px;
+              text-transform: uppercase;
+            }
+            .experience-item, .education-item { 
+              margin-bottom: 10px; 
+            }
+            .job-title { 
+              font-weight: bold; 
+              color: #000000; 
+              font-size: 11pt;
+            }
+            .company { 
+              color: #4a5568; 
+              font-weight: normal;
+              font-style: italic;
+            }
+            .date { 
+              color: #718096; 
+              font-size: 10pt; 
+              margin: 2px 0;
+            }
+            .skills { 
+              display: block; 
+              margin-top: 5px; 
+            }
+            .skill-tag { 
+              display: inline-block;
+              margin: 2px 4px 2px 0;
+              padding: 1px 6px;
+              background: #f7fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 3px;
+              font-size: 9pt;
+            }
+            .description {
+              color: #4a5568;
+              line-height: 1.3;
+              margin-top: 4px;
+              font-size: 10pt;
+            }
+          `;
+        case 'modern-classic':
+          return `
+            body { 
+              font-family: 'Georgia', 'Times New Roman', serif; 
+              margin: 0.5in; 
+              line-height: 1.5; 
+              color: #000000;
+              font-size: 11pt;
+            }
+            .resume-container { max-width: 100%; }
+            .header { 
+              text-align: left; 
+              margin-bottom: 25px; 
+            }
+            .name { 
+              font-size: 16pt; 
+              font-weight: bold; 
+              color: #000000; 
+              margin-bottom: 5px;
+            }
+            .contact-info { 
+              color: #666666; 
+              font-size: 10pt;
+            }
+            .section { 
+              margin-bottom: 18px; 
+            }
+            .section-title { 
+              font-size: 12pt; 
+              font-weight: bold; 
+              color: #000000; 
+              border-bottom: 1px solid #000000; 
+              padding-bottom: 2px; 
+              margin-bottom: 8px;
+            }
+            .experience-item, .education-item { 
+              margin-bottom: 12px; 
+            }
+            .job-title { 
+              font-weight: bold; 
+              color: #000000; 
+              font-size: 11pt;
+            }
+            .company { 
+              color: #444444; 
+              font-weight: normal;
+            }
+            .date { 
+              color: #666666; 
+              font-size: 10pt; 
+              margin: 2px 0;
+            }
+            .skills { 
+              display: block; 
+              margin-top: 5px; 
+            }
+            .skill-tag { 
+              display: inline-block;
+              margin: 2px 4px 2px 0;
+              padding: 2px 8px;
+              background: #f8f8f8;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+              font-size: 9pt;
+            }
+          `;
+        case 'executive':
+          return `
+            body { 
+              font-family: 'Calibri', 'Arial', sans-serif; 
+              margin: 0.6in; 
+              line-height: 1.4; 
+              color: #000000;
+              font-size: 11pt;
+            }
+            .resume-container { max-width: 100%; }
+            .header { 
+              text-align: center; 
+              margin-bottom: 25px; 
+              padding-bottom: 15px; 
+              border-bottom: 3px solid #2d3748;
+            }
+            .name { 
+              font-size: 20pt; 
+              font-weight: bold; 
+              color: #000000; 
+              margin-bottom: 8px;
+              letter-spacing: 1px;
+            }
+            .contact-info { 
+              color: #4a5568; 
+              font-size: 10pt;
+              letter-spacing: 0.5px;
+            }
+            .section { 
+              margin-bottom: 20px; 
+            }
+            .section-title { 
+              font-size: 12pt; 
+              font-weight: bold; 
+              color: #2d3748; 
+              border-bottom: 2px solid #e2e8f0; 
+              padding-bottom: 4px; 
+              margin-bottom: 10px;
+              text-transform: uppercase;
+            }
+            .experience-item, .education-item { 
+              margin-bottom: 15px; 
+              padding-left: 15px;
+              border-left: 3px solid #e2e8f0;
+            }
+            .job-title { 
+              font-weight: bold; 
+              color: #000000; 
+              font-size: 11pt;
+            }
+            .company { 
+              color: #4a5568; 
+              font-weight: 500;
+            }
+            .date { 
+              color: #718096; 
+              font-size: 10pt; 
+              margin: 3px 0;
+            }
+            .skills { 
+              display: block; 
+              margin-top: 6px; 
+            }
+            .skill-tag { 
+              display: inline-block;
+              margin: 2px 4px 2px 0;
+              padding: 3px 8px;
+              background: #edf2f7;
+              border-radius: 4px;
+              font-size: 9pt;
+            }
+          `;
+        case 'minimalist':
+          return `
+            body { 
+              font-family: 'Helvetica', 'Arial', sans-serif; 
+              margin: 0.7in; 
+              line-height: 1.5; 
+              color: #000000;
+              font-size: 10pt;
+            }
+            .resume-container { max-width: 100%; }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+            }
+            .name { 
+              font-size: 14pt; 
+              font-weight: bold; 
+              color: #000000; 
+              margin-bottom: 5px;
+            }
+            .contact-info { 
+              color: #666666; 
+              font-size: 9pt;
+            }
+            .section { 
+              margin-bottom: 20px; 
+            }
+            .section-title { 
+              font-size: 11pt; 
+              font-weight: bold; 
+              color: #000000; 
+              margin-bottom: 8px;
+            }
+            .experience-item, .education-item { 
+              margin-bottom: 12px; 
+            }
+            .job-title { 
+              font-weight: bold; 
+              color: #000000; 
+              font-size: 10pt;
+            }
+            .company { 
+              color: #444444; 
+              font-weight: normal;
+            }
+            .date { 
+              color: #666666; 
+              font-size: 9pt; 
+              margin: 2px 0;
+            }
+            .skills { 
+              display: block; 
+              margin-top: 5px; 
+            }
+            .skill-tag { 
+              display: inline-block;
+              margin: 1px 3px 1px 0;
+              padding: 1px 6px;
+              background: white;
+              border: 1px solid #e2e8f0;
+              border-radius: 2px;
+              font-size: 8pt;
+            }
+          `;
+        default:
+          return `
+            body { 
+              font-family: 'Arial', sans-serif; 
+              margin: 0.5in; 
+              line-height: 1.4; 
+              color: #000000;
+              font-size: 11pt;
+            }
+            .resume-container { max-width: 100%; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .name { font-size: 18pt; font-weight: bold; margin-bottom: 5px; }
+            .contact-info { color: #4a5568; font-size: 10pt; }
+            .section { margin-bottom: 15px; }
+            .section-title { font-size: 12pt; font-weight: bold; border-bottom: 1px solid #cbd5e0; padding-bottom: 3px; margin-bottom: 8px; }
+            .experience-item, .education-item { margin-bottom: 10px; }
+            .job-title { font-weight: bold; font-size: 11pt; }
+            .company { color: #4a5568; }
+            .date { color: #718096; font-size: 10pt; margin: 2px 0; }
+            .skills { display: block; margin-top: 5px; }
+            .skill-tag { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 6px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 3px; font-size: 9pt; }
+          `;
+      }
+    };
+
     printWindow.document.write(`
+      <!DOCTYPE html>
       <html>
-        <head>
-          <title>${resumeData.personal.fullName || 'Resume'}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .name { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-            .contact-info { color: #666; margin-bottom: 20px; }
-            .section { margin-bottom: 20px; }
-            .section-title { font-size: 18px; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
-            .experience-item, .education-item { margin-bottom: 15px; }
-            .job-title { font-weight: bold; }
-            .company { color: #666; }
-            .date { color: #999; font-size: 14px; }
-          </style>
-        </head>
-        <body>
+      <head>
+        <title>${resumeData.personal.fullName || 'Resume'} - Professional Resume</title>
+        <meta charset="UTF-8">
+        <style>
+          ${getTemplateStyles()}
+          @media print {
+            body { margin: 0.4in; }
+            .no-print { display: none; }
+            .page-break { page-break-before: always; }
+          }
+          @page {
+            margin: 0.5in;
+            size: letter;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="resume-container">
           ${element.innerHTML}
-        </body>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(() => {
+              window.close();
+            }, 100);
+          };
+        </script>
+      </body>
       </html>
     `);
     printWindow.document.close();
-    printWindow.print();
   };
 
-  // Simple resume content generation
+  // ATS-optimized resume content generation
   const generateResumeContent = () => {
-    const { personal, summary, experience, education, skills } = resumeData;
+    const { personal, summary, experience, education, skills, projects, certifications, languages } = resumeData;
+    const template = templates.find(t => t.id === selectedTemplate);
     
+    const getTemplateClass = () => {
+      switch(template.style) {
+        case 'ats-professional':
+          return 'font-sans text-black';
+        case 'modern-classic':
+          return 'font-serif text-black';
+        case 'executive':
+          return 'font-sans text-black';
+        case 'minimalist':
+          return 'font-sans text-black';
+        default:
+          return 'font-sans text-black';
+      }
+    };
+
     return `
-      <div class="resume-container">
+      <div class="resume-container ${getTemplateClass()}">
+        <!-- Header Section -->
         <div class="header">
-          <div class="name">${personal.fullName || 'Your Name'}</div>
+          <div class="name text-2xl font-bold uppercase">${personal.fullName || 'Your Name'}</div>
           <div class="contact-info">
             ${personal.email ? `${personal.email} • ` : ''}
             ${personal.phone ? `${personal.phone} • ` : ''}
             ${personal.location || ''}
-            ${personal.linkedin ? `<br>LinkedIn: ${personal.linkedin}` : ''}
+            ${personal.linkedin ? ` • LinkedIn: ${personal.linkedin}` : ''}
             ${personal.github ? ` • GitHub: ${personal.github}` : ''}
           </div>
         </div>
 
+        <!-- Professional Summary -->
         ${summary ? `
         <div class="section">
           <div class="section-title">Professional Summary</div>
-          <p>${summary}</p>
+          <p class="description">${summary}</p>
         </div>
         ` : ''}
 
+        <!-- Work Experience -->
         ${experience.length > 0 ? `
         <div class="section">
-          <div class="section-title">Work Experience</div>
+          <div class="section-title">Professional Experience</div>
           ${experience.map(exp => `
             <div class="experience-item">
               <div class="job-title">${exp.position || 'Position'}</div>
-              <div class="company">${exp.company || 'Company'} ${exp.location ? ` • ${exp.location}` : ''}</div>
+              <div class="company">${exp.company || 'Company'} ${exp.location ? ` | ${exp.location}` : ''}</div>
               <div class="date">${exp.startDate || 'Start'} - ${exp.current ? 'Present' : (exp.endDate || 'End')}</div>
-              ${exp.description ? `<p>${exp.description}</p>` : ''}
+              ${exp.description ? `<div class="description">${exp.description.replace(/\n/g, '<br>')}</div>` : ''}
             </div>
           `).join('')}
         </div>
         ` : ''}
 
+        <!-- Education -->
         ${education.length > 0 ? `
         <div class="section">
           <div class="section-title">Education</div>
           ${education.map(edu => `
             <div class="education-item">
               <div class="job-title">${edu.degree || 'Degree'}</div>
-              <div class="company">${edu.institution || 'Institution'} ${edu.location ? ` • ${edu.location}` : ''}</div>
+              <div class="company">${edu.institution || 'Institution'} ${edu.location ? ` | ${edu.location}` : ''}</div>
               <div class="date">${edu.startDate || 'Start'} - ${edu.current ? 'Present' : (edu.endDate || 'End')}</div>
+              ${edu.description ? `<div class="description">${edu.description}</div>` : ''}
             </div>
           `).join('')}
         </div>
         ` : ''}
 
+        <!-- Skills -->
         ${skills.length > 0 ? `
         <div class="section">
-          <div class="section-title">Skills</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="section-title">Technical Skills</div>
+          <div class="skills">
             ${skills.map(skill => `
-              <span style="background: #e3f2fd; color: #1976d2; padding: 4px 12px; border-radius: 12px; font-size: 12px;">
-                ${skill.name} ${skill.level ? `(${skill.level})` : ''}
-              </span>
+              <span class="skill-tag">${skill.name}${skill.level ? ` (${skill.level})` : ''}</span>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Projects -->
+        ${projects.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Projects</div>
+          ${projects.map(project => `
+            <div class="experience-item">
+              <div class="job-title">${project.name || 'Project Name'}</div>
+              ${project.technologies ? `<div class="company">Technologies: ${project.technologies}</div>` : ''}
+              ${project.description ? `<div class="description">${project.description}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        <!-- Certifications -->
+        ${certifications.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Certifications</div>
+          ${certifications.map(cert => `
+            <div class="experience-item">
+              <div class="job-title">${cert.name || 'Certification Name'}</div>
+              <div class="company">${cert.issuer || 'Issuing Organization'}</div>
+              <div class="date">${cert.date || 'Date Earned'}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        <!-- Languages -->
+        ${languages.length > 0 ? `
+        <div class="section">
+          <div class="section-title">Languages</div>
+          <div class="skills">
+            ${languages.map(lang => `
+              <span class="skill-tag">${lang.name}${lang.proficiency ? ` (${lang.proficiency})` : ''}</span>
             `).join('')}
           </div>
         </div>
@@ -293,21 +674,24 @@ const ResumeBuilder = () => {
     { id: 'summary', label: 'Summary', icon: '📝' },
     { id: 'experience', label: 'Experience', icon: '💼' },
     { id: 'education', label: 'Education', icon: '🎓' },
-    { id: 'skills', label: 'Skills', icon: '🛠️' }
+    { id: 'skills', label: 'Skills', icon: '🛠️' },
+    { id: 'projects', label: 'Projects', icon: '🚀' },
+    { id: 'certifications', label: 'Certifications', icon: '🏆' },
+    { id: 'languages', label: 'Languages', icon: '🌐' }
   ];
 
-  // Render functions
+  // Render functions for form sections
   const renderExperienceItem = (exp) => (
     <div key={exp.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <InputField
-          label="Position"
+          label="Job Title *"
           value={exp.position}
           onChange={(e) => handleArrayUpdate('experience', exp.id, 'position', e.target.value)}
           placeholder="e.g., Senior Software Engineer"
         />
         <InputField
-          label="Company"
+          label="Company Name *"
           value={exp.company}
           onChange={(e) => handleArrayUpdate('experience', exp.id, 'company', e.target.value)}
           placeholder="e.g., Google Inc."
@@ -316,11 +700,11 @@ const ResumeBuilder = () => {
           label="Location"
           value={exp.location}
           onChange={(e) => handleArrayUpdate('experience', exp.id, 'location', e.target.value)}
-          placeholder="e.g., Remote, San Francisco, CA"
+          placeholder="e.g., San Francisco, CA (Remote)"
         />
         <div className="grid grid-cols-2 gap-2">
           <InputField
-            label="Start Date"
+            label="Start Date *"
             type="month"
             value={exp.startDate}
             onChange={(e) => handleArrayUpdate('experience', exp.id, 'startDate', e.target.value)}
@@ -337,11 +721,13 @@ const ResumeBuilder = () => {
       </div>
       
       <TextAreaField
-        label="Description"
+        label="Responsibilities & Achievements"
         value={exp.description}
         onChange={(e) => handleArrayUpdate('experience', exp.id, 'description', e.target.value)}
         rows={3}
-        placeholder="Describe your responsibilities and achievements..."
+        placeholder="• Developed and maintained web applications using React and Node.js...
+• Improved application performance by 40% through optimization...
+• Led a team of 3 developers on project delivery..."
       />
       
       <div className="flex justify-between items-center mt-3">
@@ -368,13 +754,13 @@ const ResumeBuilder = () => {
     <div key={edu.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         <InputField
-          label="Degree"
+          label="Degree *"
           value={edu.degree}
           onChange={(e) => handleArrayUpdate('education', edu.id, 'degree', e.target.value)}
           placeholder="e.g., Bachelor of Science in Computer Science"
         />
         <InputField
-          label="Institution"
+          label="Institution *"
           value={edu.institution}
           onChange={(e) => handleArrayUpdate('education', edu.id, 'institution', e.target.value)}
           placeholder="e.g., Stanford University"
@@ -404,11 +790,11 @@ const ResumeBuilder = () => {
       </div>
       
       <TextAreaField
-        label="Description"
+        label="Achievements & Relevant Coursework"
         value={edu.description}
         onChange={(e) => handleArrayUpdate('education', edu.id, 'description', e.target.value)}
         rows={2}
-        placeholder="Relevant coursework, achievements, or honors..."
+        placeholder="GPA: 3.8/4.0, Dean's List, Relevant coursework: Data Structures, Algorithms..."
       />
       
       <div className="flex justify-between items-center mt-3">
@@ -419,7 +805,7 @@ const ResumeBuilder = () => {
             onChange={(e) => handleArrayUpdate('education', edu.id, 'current', e.target.checked)}
             className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
           />
-          <span className="text-gray-700">Currently studying here</span>
+          <span className="text-gray-700">Currently enrolled</span>
         </label>
         <button
           onClick={() => handleArrayRemove('education', edu.id)}
@@ -435,7 +821,7 @@ const ResumeBuilder = () => {
     <div key={skill.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <InputField
-          label="Skill Name"
+          label="Skill Name *"
           value={skill.name}
           onChange={(e) => handleArrayUpdate('skills', skill.id, 'name', e.target.value)}
           placeholder="e.g., JavaScript, Project Management"
@@ -471,12 +857,12 @@ const ResumeBuilder = () => {
         <div className="px-6 py-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Create Your
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Perfect Resume</span>
+              ATS-Optimized
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Resume Builder</span>
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Build professional, ATS-friendly resumes that stand out. 
-              <span className="text-blue-600 font-medium"> Download instantly as PDF.</span>
+              Create professional resumes that pass through Applicant Tracking Systems
+              <span className="text-blue-600 font-medium"> with clean PDF export.</span>
             </p>
           </div>
         </div>
@@ -511,45 +897,49 @@ const ResumeBuilder = () => {
               {/* Personal Information Section */}
               {activeTab === 'personal' && (
                 <FormSection title="Personal Information" icon="👤">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      label="Full Name"
-                      value={resumeData.personal.fullName}
-                      onChange={(e) => handleInputChange('personal', 'fullName', e.target.value)}
-                      placeholder="John Doe"
-                    />
-                    <InputField
-                      label="Email Address"
-                      type="email"
-                      value={resumeData.personal.email}
-                      onChange={(e) => handleInputChange('personal', 'email', e.target.value)}
-                      placeholder="john@example.com"
-                    />
-                    <InputField
-                      label="Phone Number"
-                      type="tel"
-                      value={resumeData.personal.phone}
-                      onChange={(e) => handleInputChange('personal', 'phone', e.target.value)}
-                      placeholder="+1 (555) 123-4567"
-                    />
-                    <InputField
-                      label="Location"
-                      value={resumeData.personal.location}
-                      onChange={(e) => handleInputChange('personal', 'location', e.target.value)}
-                      placeholder="San Francisco, CA"
-                    />
-                    <InputField
-                      label="LinkedIn URL"
-                      value={resumeData.personal.linkedin}
-                      onChange={(e) => handleInputChange('personal', 'linkedin', e.target.value)}
-                      placeholder="linkedin.com/in/username"
-                    />
-                    <InputField
-                      label="GitHub URL"
-                      value={resumeData.personal.github}
-                      onChange={(e) => handleInputChange('personal', 'github', e.target.value)}
-                      placeholder="github.com/username"
-                    />
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InputField
+                        label="Full Name *"
+                        value={resumeData.personal.fullName}
+                        onChange={(e) => handleInputChange('personal', 'fullName', e.target.value)}
+                        placeholder="John Doe"
+                      />
+                      <InputField
+                        label="Email Address *"
+                        type="email"
+                        value={resumeData.personal.email}
+                        onChange={(e) => handleInputChange('personal', 'email', e.target.value)}
+                        placeholder="john@example.com"
+                      />
+                      <InputField
+                        label="Phone Number *"
+                        type="tel"
+                        value={resumeData.personal.phone}
+                        onChange={(e) => handleInputChange('personal', 'phone', e.target.value)}
+                        placeholder="+1 (555) 123-4567"
+                      />
+                      <InputField
+                        label="Location *"
+                        value={resumeData.personal.location}
+                        onChange={(e) => handleInputChange('personal', 'location', e.target.value)}
+                        placeholder="San Francisco, CA"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InputField
+                        label="LinkedIn URL"
+                        value={resumeData.personal.linkedin}
+                        onChange={(e) => handleInputChange('personal', 'linkedin', e.target.value)}
+                        placeholder="linkedin.com/in/username"
+                      />
+                      <InputField
+                        label="GitHub URL"
+                        value={resumeData.personal.github}
+                        onChange={(e) => handleInputChange('personal', 'github', e.target.value)}
+                        placeholder="github.com/username"
+                      />
+                    </div>
                   </div>
                 </FormSection>
               )}
@@ -562,8 +952,11 @@ const ResumeBuilder = () => {
                     value={resumeData.summary}
                     onChange={(e) => handleSummaryChange(e.target.value)}
                     rows={5}
-                    placeholder="Describe your professional background, key skills, and career objectives..."
+                    placeholder="Experienced software engineer with 5+ years in full-stack development. Specialized in React, Node.js, and cloud technologies. Proven track record of delivering scalable solutions and leading cross-functional teams..."
                   />
+                  <div className="mt-2 text-xs text-gray-500">
+                    💡 <strong>ATS Tip:</strong> Include keywords from job descriptions and quantify achievements.
+                  </div>
                 </FormSection>
               )}
 
@@ -652,6 +1045,9 @@ const ResumeBuilder = () => {
                     >
                       ➕ Add New Skill
                     </button>
+                    <div className="text-xs text-gray-500">
+                      💡 <strong>ATS Tip:</strong> Include both technical and soft skills relevant to your target role.
+                    </div>
                   </div>
                 </FormSection>
               )}
@@ -661,8 +1057,13 @@ const ResumeBuilder = () => {
           {/* Right Panel - Preview & Templates */}
           <div className="space-y-6">
             {/* Template Selection */}
-            <FormSection title="Choose Template" icon="🎨">
+            <FormSection title="Choose ATS Template" icon="🎨">
               <TemplateSelector selected={selectedTemplate} onSelect={setSelectedTemplate} />
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs text-blue-700">
+                  <strong>ATS-Friendly Features:</strong> Clean formatting, standard fonts, proper section headers, and keyword optimization.
+                </p>
+              </div>
             </FormSection>
 
             {/* Live Preview */}
@@ -678,7 +1079,7 @@ const ResumeBuilder = () => {
             </FormSection>
 
             {/* Quick Actions */}
-            <FormSection title="Quick Actions" icon="🚀">
+            <FormSection title="Export Resume" icon="🚀">
               <div className="space-y-3">
                 <button
                   onClick={() => saveResume()}
@@ -692,7 +1093,7 @@ const ResumeBuilder = () => {
                   onClick={downloadResumePDF}
                   className="w-full bg-green-500 text-white py-3 rounded-lg text-sm font-medium hover:bg-green-600 transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  📄 Download as PDF
+                  📄 Download ATS-Optimized PDF
                 </button>
 
                 {lastSave && (
@@ -700,6 +1101,9 @@ const ResumeBuilder = () => {
                     ✅ Last saved: {lastSave.toLocaleTimeString()}
                   </div>
                 )}
+              </div>
+              <div className="mt-3 text-xs text-gray-500 text-center">
+                PDF export includes only your resume content with professional formatting
               </div>
             </FormSection>
           </div>
