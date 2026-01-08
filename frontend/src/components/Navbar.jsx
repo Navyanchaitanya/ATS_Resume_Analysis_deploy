@@ -36,17 +36,16 @@ const Navbar = ({ token, userData, onLogout }) => {
       {/* Desktop Navbar */}
       <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200 px-6 py-4 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <img src="/public/icon2.png" alt="Logo" className="w-10 h-10" />
+          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <motion.div
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.5 }}
               className="w-10 h-10 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center"
             >
-              <FaFileAlt className="text-white text-lg" />
             </motion.div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              
+              ResumeIQ
             </span>
           </Link>
 
