@@ -14,10 +14,10 @@ import AdminLogin from './pages/AdminLogin';
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
-import Analyses from './pages/admin/Analyses';
-import Settings from './pages/admin/Settings';
-import UserDetail from './pages/admin/UserDetail';
-import AnalysisDetail from './pages/admin/AnalysisDetail';
+// Removed Settings import since we don't have the file
+// import Settings from './pages/admin/Settings';
+// import UserDetail from './pages/admin/UserDetail';
+// import AnalysisDetail from './pages/admin/AnalysisDetail';
 
 
 // Auto-detect API URL for Render production
@@ -60,31 +60,37 @@ function App() {
         <Navbar token={userToken} userData={userData} onLogout={handleLogout} />
         <ErrorBoundary>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={!userToken ? <Home /> : <Navigate to="/home" />} />
             <Route path="/login" element={!userToken ? <Login onLogin={handleLogin} /> : <Navigate to="/home" />} />
             <Route path="/register" element={!userToken ? <Register onRegister={handleLogin} /> : <Navigate to="/home" />} />
+            
+            {/* Protected User Routes */}
             <Route path="/home" element={userToken ? <LoggedInHome token={userToken} /> : <Navigate to="/login" />} />
             <Route path="/profile" element={userToken ? <Profile token={userToken} onLogout={handleLogout} /> : <Navigate to="/login" />} />
             <Route path="/resume-score" element={userToken ? <ResumeScore token={userToken} /> : <Navigate to="/login" />} />
             <Route path="/resume-builder" element={userToken ? <ResumeBuilder /> : <Navigate to="/login" />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="users" element={<Users />} />
+              {/* Comment out or remove routes for files that don't exist yet */}
+              {/* <Route path="users/:id" element={<UserDetail />} /> */}
+              {/* <Route path="analyses" element={<Analyses />} /> */}
+              {/* <Route path="analyses/:id" element={<AnalysisDetail />} /> */}
+              {/* <Route path="settings" element={<Settings />} /> */}
+            </Route>
+            
+            {/* Fallback Route */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-          <Route path="/admin/login" element={<AdminLogin />} />
-<Route path="/admin" element={<AdminLayout />}>
-  <Route index element={<Navigate to="/admin/dashboard" replace />} />
-  <Route path="dashboard" element={<Dashboard />} />
-  <Route path="users" element={<Users />} />
-  <Route path="users/:id" element={<UserDetail />} />
-  <Route path="analyses" element={<Analyses />} />
-  <Route path="analyses/:id" element={<AnalysisDetail />} />
-  <Route path="settings" element={<Settings />} />
-</Route>
         </ErrorBoundary>
       </div>
     </Router>
   );
 }
-
-
 
 export default App;
