@@ -970,8 +970,11 @@ app.post('/api/register', async (req, res) => {
     ];
     
     // Check if registering email is in the admin list
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-    const adminRole = isAdmin ? 'super_admin' : 'user';
+    //const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    //const adminRole = isAdmin ? 'super_admin' : 'user';
+
+    const isAdmin = false;  
+const adminRole = 'user';
     // ========== END ADMIN AUTO-PROMOTION ==========
     
     const user = await User.create({
