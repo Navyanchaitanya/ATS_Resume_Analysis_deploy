@@ -46,7 +46,7 @@ const Navbar = ({ token, userData, onLogout }) => {
               <FaFileAlt className="text-white text-lg" />
             </motion.div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              ResumeCheck
+              ResumeIQ
             </span>
           </Link>
 

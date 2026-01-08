@@ -351,7 +351,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.1 }}
             >
-              Why Choose <span className="text-cyan-400">ResumeCheck</span>?
+              Why Choose <span className="text-cyan-400">ResumeIQ</span>?
             </motion.h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
