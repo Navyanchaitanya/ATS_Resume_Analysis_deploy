@@ -36,7 +36,7 @@ const Navbar = ({ token, userData, onLogout }) => {
       {/* Desktop Navbar */}
       <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200 px-6 py-4 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          {img src="/icon2.png" alt="Logo" className="h-8 w-8"/>}
+          <img src="/icon2.png" alt="Logo" className="h-8 w-8" />
           <Link to="/" className="flex items-center space-x-2">
             
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
