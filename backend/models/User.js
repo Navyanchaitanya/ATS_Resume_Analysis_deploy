@@ -11,6 +11,16 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(80),
     allowNull: true
   },
+  // Add these fields to your existing User model:
+is_admin: {
+  type: Sequelize.BOOLEAN,
+  defaultValue: false,
+  allowNull: false
+},
+admin_role: {
+  type: Sequelize.STRING,
+  defaultValue: 'user'
+},
   email: {
     type: DataTypes.STRING(120),
     unique: true,

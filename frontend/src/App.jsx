@@ -9,6 +9,16 @@ import ResumeBuilder from './components/ResumeBuilder';
 import LoggedInHome from './pages/LoggedInHome';
 import Navbar from './components/Navbar';
 import ErrorBoundary from './components/ErrorBoundary';
+// Added these routes for admin panel 
+import AdminLogin from './pages/AdminLogin';
+import AdminLayout from './components/admin/AdminLayout';
+import Dashboard from './pages/admin/Dashboard';
+import Users from './pages/admin/Users';
+import Analyses from './pages/admin/Analyses';
+import Settings from './pages/admin/Settings';
+import UserDetail from './pages/admin/UserDetail';
+import AnalysisDetail from './pages/admin/AnalysisDetail';
+
 
 // Auto-detect API URL for Render production
 export const API_BASE_URL = window.location.origin;
@@ -59,6 +69,16 @@ function App() {
             <Route path="/resume-builder" element={userToken ? <ResumeBuilder /> : <Navigate to="/login" />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
+          <Route path="/admin/login" element={<AdminLogin />} />
+<Route path="/admin" element={<AdminLayout />}>
+  <Route index element={<Navigate to="/admin/dashboard" replace />} />
+  <Route path="dashboard" element={<Dashboard />} />
+  <Route path="users" element={<Users />} />
+  <Route path="users/:id" element={<UserDetail />} />
+  <Route path="analyses" element={<Analyses />} />
+  <Route path="analyses/:id" element={<AnalysisDetail />} />
+  <Route path="settings" element={<Settings />} />
+</Route>
         </ErrorBoundary>
       </div>
     </Router>

@@ -11,6 +11,7 @@ const pdf = require('pdf-parse');
 const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'render-production-secret';
 const NODE_ENV = process.env.NODE_ENV || 'production';
+const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'admin-secret-key-123';
 
 // Initialize Express
 const app = express();
@@ -41,7 +42,17 @@ const User = sequelize.define('User', {
   location: { type: Sequelize.STRING(100), allowNull: true },
   bio: { type: Sequelize.TEXT, allowNull: true },
   security_question: { type: Sequelize.STRING(200), allowNull: false, defaultValue: "What city were you born in?" },
-  security_answer: { type: Sequelize.STRING(200), allowNull: false, defaultValue: "default" }
+  security_answer: { type: Sequelize.STRING(200), allowNull: false, defaultValue: "default" },
+  // Admin fields
+  is_admin: { 
+    type: Sequelize.BOOLEAN, 
+    defaultValue: false, 
+    allowNull: false 
+  },
+  admin_role: { 
+    type: Sequelize.STRING, 
+    defaultValue: 'user' 
+  }
 }, {
   tableName: 'users',
   timestamps: true
@@ -67,6 +78,10 @@ const ResumeAnalysis = sequelize.define('ResumeAnalysis', {
   timestamps: true
 });
 
+// Define associations
+User.hasMany(ResumeAnalysis, { foreignKey: 'user_id' });
+ResumeAnalysis.belongsTo(User, { foreignKey: 'user_id' });
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -75,7 +90,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve static files from frontend build
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-// Auth middleware
+// ==================== MIDDLEWARE ====================
+
+// Regular auth middleware
 const verifyToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -97,7 +114,53 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Utility functions
+// Admin auth middleware
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.user_id;
+
+    // Check if user exists and is admin
+    const user = await User.findByPk(req.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user is admin
+    if (!user.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Add admin info to request
+    req.isAdmin = true;
+    req.adminRole = user.admin_role || 'admin';
+    
+    next();
+  } catch (error) {
+    console.error('Admin verification error:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// ==================== UTILITY FUNCTIONS ====================
+
 const extractTextFromPdf = async (buffer) => {
   try {
     const data = await pdf(buffer);
@@ -477,7 +540,7 @@ const handleMulterError = (error, req, res, next) => {
   next(error);
 };
 
-// Routes
+// ==================== ROUTES ====================
 
 // Health check
 app.get('/health', (req, res) => {
@@ -521,6 +584,361 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// ==================== ADMIN ROUTES ====================
+
+// Admin login
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { email, password, admin_key } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if user is admin
+    if (!user.is_admin) {
+      return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+    }
+
+    // Optional: verify admin key if provided
+    if (admin_key && admin_key !== ADMIN_SECRET_KEY) {
+      return res.status(401).json({ error: 'Invalid admin key' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate admin token
+    const token = jwt.sign(
+      { 
+        user_id: user.id,
+        is_admin: true,
+        admin_role: user.admin_role || 'admin'
+      },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        is_admin: user.is_admin,
+        admin_role: user.admin_role,
+        profession: user.profession,
+        location: user.location
+      }
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get admin dashboard stats
+app.get('/api/admin/dashboard/stats', verifyAdmin, async (req, res) => {
+  try {
+    // Total users count
+    const totalUsers = await User.count();
+    
+    // Total analyses count
+    const totalAnalyses = await ResumeAnalysis.count();
+    
+    // Recent users (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentUsers = await User.count({
+      where: {
+        createdAt: {
+          [Sequelize.Op.gte]: sevenDaysAgo
+        }
+      }
+    });
+    
+    // Recent analyses (last 7 days)
+    const recentAnalyses = await ResumeAnalysis.count({
+      where: {
+        createdAt: {
+          [Sequelize.Op.gte]: sevenDaysAgo
+        }
+      }
+    });
+    
+    // Average score
+    const avgScoreResult = await ResumeAnalysis.findOne({
+      attributes: [
+        [Sequelize.fn('AVG', Sequelize.col('total_score')), 'avg_score']
+      ],
+      raw: true
+    });
+    
+    const averageScore = avgScoreResult?.avg_score || 0;
+
+    return res.json({
+      stats: {
+        totalUsers,
+        totalAnalyses,
+        recentUsers,
+        recentAnalyses,
+        averageScore: parseFloat(averageScore).toFixed(2)
+      }
+    });
+  } catch (error) {
+    console.error('Dashboard stats error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all users with pagination
+app.get('/api/admin/users', verifyAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: users } = await User.findAndCountAll({
+      attributes: [
+        'id', 'name', 'email', 'profession', 'location', 
+        'is_admin', 'admin_role', 'createdAt', 'updatedAt'
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    });
+
+    return res.json({
+      users,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get single user details with their analyses
+app.get('/api/admin/users/:id', verifyAdmin, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id, {
+      attributes: [
+        'id', 'name', 'email', 'profession', 'location', 'bio',
+        'is_admin', 'admin_role', 'createdAt', 'updatedAt'
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get user's analyses
+    const analyses = await ResumeAnalysis.findAll({
+      where: { user_id: req.params.id },
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+
+    return res.json({
+      user,
+      recentAnalyses: analyses.map(a => ({
+        id: a.id,
+        filename: a.filename,
+        total_score: a.total_score,
+        created_at: a.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all analyses with pagination
+app.get('/api/admin/analyses', verifyAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: analyses } = await ResumeAnalysis.findAndCountAll({
+      include: [{
+        model: User,
+        attributes: ['id', 'name', 'email']
+      }],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    });
+
+    const formatted = analyses.map(a => ({
+      id: a.id,
+      filename: a.filename,
+      total_score: a.total_score,
+      similarity: a.similarity,
+      readability: a.readability,
+      completeness: a.completeness,
+      formatting: a.formatting,
+      grammar_score: a.grammar_score,
+      keyword_match_percentage: a.keyword_match_percentage,
+      created_at: a.createdAt,
+      user: a.User ? {
+        id: a.User.id,
+        name: a.User.name,
+        email: a.User.email
+      } : null
+    }));
+
+    return res.json({
+      analyses: formatted,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get analyses error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get detailed analysis
+app.get('/api/admin/analyses/:id', verifyAdmin, async (req, res) => {
+  try {
+    const analysis = await ResumeAnalysis.findByPk(req.params.id, {
+      include: [{
+        model: User,
+        attributes: ['id', 'name', 'email', 'profession', 'location']
+      }]
+    });
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    const formatted = {
+      id: analysis.id,
+      filename: analysis.filename,
+      resume_text: analysis.resume_text,
+      jd_text: analysis.jd_text,
+      score: {
+        total: analysis.total_score,
+        similarity: analysis.similarity,
+        readability: analysis.readability,
+        completeness: analysis.completeness,
+        formatting: analysis.formatting,
+        grammar_score: analysis.grammar_score,
+        grammar_issues: JSON.parse(analysis.grammar_issues || '[]'),
+        matched_keywords: JSON.parse(analysis.matched_keywords || '[]'),
+        missing_keywords: JSON.parse(analysis.missing_keywords || '[]'),
+        keyword_match_percentage: analysis.keyword_match_percentage
+      },
+      created_at: analysis.createdAt,
+      user: analysis.User ? {
+        id: analysis.User.id,
+        name: analysis.User.name,
+        email: analysis.User.email,
+        profession: analysis.User.profession,
+        location: analysis.User.location
+      } : null
+    };
+
+    return res.json(formatted);
+  } catch (error) {
+    console.error('Get analysis error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Make a user admin (protected - only for super admin)
+app.post('/api/admin/users/:id/make-admin', verifyAdmin, async (req, res) => {
+  try {
+    // Check if current user is super admin
+    const currentAdmin = await User.findByPk(req.userId);
+    if (currentAdmin.admin_role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admin can perform this action' });
+    }
+
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.is_admin = true;
+    user.admin_role = req.body.role || 'admin';
+    await user.save();
+
+    return res.json({
+      message: 'User promoted to admin successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        is_admin: user.is_admin,
+        admin_role: user.admin_role
+      }
+    });
+  } catch (error) {
+    console.error('Make admin error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Remove admin privileges
+app.post('/api/admin/users/:id/remove-admin', verifyAdmin, async (req, res) => {
+  try {
+    // Check if current user is super admin
+    const currentAdmin = await User.findByPk(req.userId);
+    if (currentAdmin.admin_role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admin can perform this action' });
+    }
+
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent removing yourself
+    if (user.id === req.userId) {
+      return res.status(400).json({ error: 'Cannot remove your own admin privileges' });
+    }
+
+    user.is_admin = false;
+    user.admin_role = null;
+    await user.save();
+
+    return res.json({
+      message: 'Admin privileges removed successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        is_admin: user.is_admin
+      }
+    });
+  } catch (error) {
+    console.error('Remove admin error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ==================== EXISTING USER ROUTES ====================
+
 // Register
 app.post('/api/register', async (req, res) => {
   try {
@@ -542,18 +960,35 @@ app.post('/api/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
+    
+    // ========== ADMIN AUTO-PROMOTION ==========
+    // Change this email to your actual email address
+    const ADMIN_EMAILS = [
+      'adminlucky@gmail.com.in',      // Change this to your email
+      //'admin@example.com',           // Add more admin emails if needed
+      //'your-gmail@gmail.com'         // Add your Gmail if you use it
+    ];
+    
+    // Check if registering email is in the admin list
+    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+    const adminRole = isAdmin ? 'super_admin' : 'user';
+    // ========== END ADMIN AUTO-PROMOTION ==========
+    
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       profession,
       location,
-      bio
+      bio,
+      is_admin: isAdmin,        // Will be true for your email
+      admin_role: adminRole     // Will be 'super_admin' for your email
     });
 
     const token = jwt.sign({ user_id: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
     console.log('User registered successfully:', user.email);
+    console.log('Admin status:', isAdmin ? 'SUPER ADMIN' : 'Regular User');
     
     res.status(201).json({
       message: 'User registered successfully',
@@ -564,7 +999,9 @@ app.post('/api/register', async (req, res) => {
         email: user.email,
         profession: user.profession,
         location: user.location,
-        bio: user.bio
+        bio: user.bio,
+        is_admin: isAdmin,      // Return admin status in response
+        admin_role: adminRole
       }
     });
   } catch (error) {
@@ -1012,18 +1449,47 @@ async function startServer() {
     await ResumeAnalysis.sync({ force: false });
     console.log('✅ Database tables synchronized.');
     
+    // Add admin fields if they don't exist
+    try {
+      const tableInfo = await sequelize.queryInterface.describeTable('users');
+      if (!tableInfo.is_admin) {
+        console.log('Adding admin fields to users table...');
+        await sequelize.queryInterface.addColumn('users', 'is_admin', {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+          allowNull: false
+        });
+        await sequelize.queryInterface.addColumn('users', 'admin_role', {
+          type: Sequelize.STRING,
+          defaultValue: 'user'
+        });
+        console.log('✅ Admin fields added successfully.');
+      }
+    } catch (error) {
+      console.log('Admin fields check:', error.message);
+    }
+    
     app.listen(PORT, '0.0.0.0', () => {
-      console.log('\n' + '='.repeat(50));
-      console.log('🚀 ATS Resume Checker deployed on Render');
-      console.log('='.repeat(50));
+      console.log('\n' + '='.repeat(60));
+      console.log('🚀 ATS Resume Checker with Admin Panel');
+      console.log('='.repeat(60));
       console.log(`📍 Port: ${PORT}`);
       console.log(`🌐 Environment: ${NODE_ENV}`);
       console.log(`🗄️  Database: PostgreSQL (Render)`);
       console.log(`🔗 Health: /health`);
       console.log(`🧪 API Test: /api/test`);
       console.log(`🗄️  DB Test: /api/db-test`);
-      console.log(`🔐 Forgot Password: /api/get-security-question`);
-      console.log('='.repeat(50));
+      console.log(`👑 Admin Login: POST /api/admin/login`);
+      console.log(`📊 Admin Dashboard: GET /api/admin/dashboard/stats`);
+      console.log(`👥 Admin Users: GET /api/admin/users`);
+      console.log(`📈 Admin Analyses: GET /api/admin/analyses`);
+      console.log('='.repeat(60));
+      console.log('\n💡 To create your first admin:');
+      console.log('1. Register a regular user account');
+      console.log('2. Manually update the database:');
+      console.log('   UPDATE users SET is_admin = true, admin_role = \'super_admin\' WHERE email = \'your-email@example.com\';');
+      console.log('3. Login at /api/admin/login');
+      console.log('='.repeat(60));
     });
   } catch (error) {
     console.error('❌ Server startup failed:', error);
