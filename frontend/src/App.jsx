@@ -1,101 +1,70 @@
-// frontend/src/App.jsx
-import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './components/Profile';
+import ResumeScore from './components/ResumeScore';
+import ResumeBuilder from './components/ResumeBuilder';
+import LoggedInHome from './pages/LoggedInHome';
+import Navbar from './components/Navbar';
+import ErrorBoundary from './components/ErrorBoundary';
 
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./components/Profile";
-import ResumeScore from "./components/ResumeScore";
-import ResumeBuilder from "./components/ResumeBuilder"; // placeholder
-import LoggedInHome from "./pages/LoggedInHome";
-import Navbar from "./components/Navbar";
-
-// ✅ Read API base URL from environment
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// Auto-detect API URL for Render production
+export const API_BASE_URL = window.location.origin;
 
 function App() {
-  const [userToken, setUserToken] = useState(localStorage.getItem("token"));
+  const [userToken, setUserToken] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    setUserToken(localStorage.getItem("token"));
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token) setUserToken(token);
+    if (user) {
+      try {
+        setUserData(JSON.parse(user));
+      } catch (error) {
+        localStorage.removeItem('user');
+      }
+    }
   }, []);
 
+  const handleLogin = (token, user) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setUserToken(token);
+    setUserData(user);
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUserToken(null);
+    setUserData(null);
   };
 
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        <Navbar token={userToken} onLogout={handleLogout} />
-        <Routes>
-          <Route
-            path="/"
-            element={!userToken ? <Home /> : <Navigate to="/home" />}
-          />
-          <Route
-            path="/login"
-            element={
-              !userToken ? (
-                <Login onLogin={setUserToken} API_BASE={API_BASE} />
-              ) : (
-                <Navigate to="/home" />
-              )
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              !userToken ? (
-                <Register onRegister={setUserToken} API_BASE={API_BASE} />
-              ) : (
-                <Navigate to="/home" />
-              )
-            }
-          />
-          <Route
-            path="/home"
-            element={userToken ? <LoggedInHome /> : <Navigate to="/login" />}
-          />
-
-          {/* 👤 User profile */}
-          <Route
-            path="/profile"
-            element={
-              userToken ? (
-                <Profile token={userToken} API_BASE={API_BASE} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-
-          {/* 📄 Resume scoring */}
-          <Route
-            path="/resume-score"
-            element={
-              userToken ? (
-                <ResumeScore token={userToken} API_BASE={API_BASE} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-
-          {/* 🛠️ Resume builder (placeholder) */}
-          <Route
-            path="/resume-builder"
-            element={userToken ? <ResumeBuilder /> : <Navigate to="/login" />}
-          />
-
-          {/* fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        <Navbar token={userToken} userData={userData} onLogout={handleLogout} />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={!userToken ? <Home /> : <Navigate to="/home" />} />
+            <Route path="/login" element={!userToken ? <Login onLogin={handleLogin} /> : <Navigate to="/home" />} />
+            <Route path="/register" element={!userToken ? <Register onRegister={handleLogin} /> : <Navigate to="/home" />} />
+            <Route path="/home" element={userToken ? <LoggedInHome token={userToken} /> : <Navigate to="/login" />} />
+            <Route path="/profile" element={userToken ? <Profile token={userToken} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+            <Route path="/resume-score" element={userToken ? <ResumeScore token={userToken} /> : <Navigate to="/login" />} />
+            <Route path="/resume-builder" element={userToken ? <ResumeBuilder /> : <Navigate to="/login" />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </ErrorBoundary>
       </div>
     </Router>
   );
 }
+
+
 
 export default App;

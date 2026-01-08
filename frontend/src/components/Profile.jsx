@@ -1,51 +1,85 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { 
+  FaUser, 
+  FaEnvelope, 
+  FaBriefcase, 
+  FaMapMarkerAlt, 
+  FaEdit, 
+  FaSave,
+  FaTimes,
+  FaAward,
+  FaStar,
+  FaFileAlt,
+  FaExclamationCircle,
+  FaSync
+} from 'react-icons/fa';
+import { API_BASE_URL } from '../App';
 
-// ✅ API base URL from .env (fallback localhost)
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-function Profile() {
+const Profile = ({ token, onLogout }) => {
   const [user, setUser] = useState(null);
+  const [userStats, setUserStats] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    profession: "",
-    location: "",
-    bio: "",
+    name: '',
+    profession: '',
+    location: '',
+    bio: ''
   });
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch(`${API_BASE}/api/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          setUser(data);
-          setForm({
-            name: data.name || "",
-            profession: data.profession || "",
-            location: data.location || "",
-            bio: data.bio || "",
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
-  }, []);
+    fetchUserStats();
+  }, [token]);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await axios.get(`${API_BASE_URL}/api/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const userData = response.data;
+      setUser(userData);
+      setForm({
+        name: userData.name || '',
+        profession: userData.profession || '',
+        location: userData.location || '',
+        bio: userData.bio || ''
+      });
+      
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setError('Failed to load profile data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserStats = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/user-stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setUserStats(response.data);
+      
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -53,151 +87,303 @@ function Profile() {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/api/profile`, {
-        method: "PUT",
+      setSaveStatus('saving');
+      const response = await axios.put(`${API_BASE_URL}/api/profile`, form, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data);
-        localStorage.setItem("user", JSON.stringify(data));
-        setIsEditing(false);
-      } else {
-        alert(data.error || "Failed to update profile");
-      }
-    } catch (err) {
-      console.error("Error saving profile:", err);
+      
+      setUser({ ...user, ...form });
+      setIsEditing(false);
+      setSaveStatus('success');
+      
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(''), 2000);
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-10">Loading user data...</div>;
-  }
+  const getInitials = (name) => {
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+  };
 
-  if (!user) {
-    return <div className="text-center mt-10">No user data found.</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 flex items-center justify-center">
+        <motion.div
+          initial={{ rotate: 0, scale: 0.8 }}
+          animate={{ rotate: 360, scale: 1 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-white p-6">
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden">
-        <div className="flex flex-col md:flex-row">
-          {/* Left: Avatar */}
-          <div className="md:w-1/3 bg-indigo-600 text-white flex flex-col items-center justify-center p-8">
-            <div className="w-32 h-32 bg-white text-indigo-600 rounded-full flex items-center justify-center text-4xl font-bold">
-              {user.name?.charAt(0).toUpperCase() || "U"}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-800 mb-4">
+            <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              Profile Dashboard
+            </span>
+          </h1>
+          <p className="text-gray-600">Manage your professional identity</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg mb-6 flex items-center">
+            <FaExclamationCircle className="mr-3 text-red-500" />
+            <div className="flex-1">
+              <strong className="font-bold">Error: </strong>
+              {error}
             </div>
-            <h2 className="mt-4 text-xl font-semibold">{user.name || "Unnamed"}</h2>
-            <p className="text-sm opacity-80 mt-1">
-              {user.profession || "No Profession"}
-            </p>
-            <p className="text-sm opacity-80">{user.location || "No Location"}</p>
+            <button
+              onClick={fetchProfile}
+              className="ml-4 bg-red-500 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+            >
+              <FaSync className="text-xs" /> Retry
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Profile Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 border border-white shadow-2xl">
+              {/* Avatar Section */}
+              <div className="text-center mb-8">
+                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-4xl font-bold text-white mb-4 shadow-2xl">
+                  {getInitials(user?.name || user?.email)}
+                </div>
+                
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  {user?.name || 'Your Name'}
+                </h2>
+                
+                <p className="text-blue-600 mb-4">
+                  {user?.profession || 'Professional Title'}
+                </p>
+                <p className="text-gray-500 text-sm">{user?.email}</p>
+              </div>
+
+              {/* Stats - REAL DATA FROM API */}
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="text-center p-4 bg-blue-50 rounded-xl">
+                  <FaFileAlt className="text-blue-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {userStats?.totalAnalyses || 0}
+                  </div>
+                  <div className="text-gray-600 text-sm">Resumes Analyzed</div>
+                </div>
+                
+                <div className="text-center p-4 bg-cyan-50 rounded-xl">
+                  <FaStar className="text-cyan-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {userStats?.averageScore ? Math.round(userStats.averageScore) + '%' : '0%'}
+                  </div>
+                  <div className="text-gray-600 text-sm">Avg. Score</div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 hover:shadow-xl flex items-center justify-center space-x-2"
+              >
+                {isEditing ? (
+                  <>
+                    <FaTimes />
+                    <span>Cancel Edit</span>
+                  </>
+                ) : (
+                  <>
+                    <FaEdit />
+                    <span>Edit Profile</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Right: Profile Info */}
-          <div className="md:w-2/3 p-8 space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              User Profile
-            </h2>
-            <div className="space-y-2">
-              <div>
-                <strong>Email:</strong>{" "}
-                <span className="text-gray-700">{user.email}</span>
+          {/* Right Column - Profile Details */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Personal Info Card */}
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 border border-white shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <FaUser className="mr-3 text-blue-500" />
+                  Personal Information
+                </h3>
               </div>
-              <div>
-                <strong>Profession:</strong>{" "}
-                <span className="text-gray-700">
-                  {user.profession || "N/A"}
-                </span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-gray-600 mb-2">Full Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                      placeholder="Enter your name"
+                    />
+                  ) : (
+                    <div className="text-gray-800 text-lg">{form.name || 'Not specified'}</div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-gray-600 mb-2">Email</label>
+                  <div className="text-gray-800 text-lg flex items-center">
+                    <FaEnvelope className="mr-2 text-blue-400" />
+                    {user?.email || 'Not specified'}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-600 mb-2">Profession</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="profession"
+                      value={form.profession}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                      placeholder="e.g., Software Engineer"
+                    />
+                  ) : (
+                    <div className="text-gray-800 text-lg flex items-center">
+                      <FaBriefcase className="mr-2 text-green-500" />
+                      {form.profession || 'Not specified'}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-gray-600 mb-2">Location</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="location"
+                      value={form.location}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                      placeholder="e.g., San Francisco, CA"
+                    />
+                  ) : (
+                    <div className="text-gray-800 text-lg flex items-center">
+                      <FaMapMarkerAlt className="mr-2 text-red-500" />
+                      {form.location || 'Not specified'}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <strong>Location:</strong>{" "}
-                <span className="text-gray-700">{user.location || "N/A"}</span>
+
+              {/* Bio Section */}
+              <div className="mt-6">
+                <label className="block text-gray-600 mb-2">Bio</label>
+                {isEditing ? (
+                  <textarea
+                    name="bio"
+                    value={form.bio}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 resize-none"
+                    placeholder="Tell us about yourself..."
+                  />
+                ) : (
+                  <div className="text-gray-700 leading-relaxed">
+                    {form.bio || 'No bio provided yet. Share something about yourself!'}
+                  </div>
+                )}
               </div>
-              <div>
-                <strong>Bio:</strong>{" "}
-                <p className="text-gray-700 mt-1">{user.bio || "No bio provided"}</p>
-              </div>
+
+              {/* Save Button */}
+              {isEditing && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={handleSave}
+                    disabled={saveStatus === 'saving'}
+                    className="bg-gradient-to-r from-green-500 to-teal-600 text-white py-3 px-8 rounded-xl font-semibold transition-all duration-300 hover:shadow-xl flex items-center justify-center space-x-2 mx-auto"
+                  >
+                    {saveStatus === 'saving' ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaSave />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
+
+                  {saveStatus === 'success' && (
+                    <div className="text-green-600 mt-4">
+                      Profile updated successfully!
+                    </div>
+                  )}
+
+                  {saveStatus === 'error' && (
+                    <div className="text-red-600 mt-4">
+                      Error saving profile. Please try again.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="pt-4">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded shadow"
-              >
-                Edit Profile
-              </button>
+            {/* Stats Card */}
+            <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 border border-white shadow-2xl">
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                <FaAward className="mr-3 text-yellow-500" />
+                Your Resume Analysis Statistics
+              </h3>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-xl">
+                  <FaFileAlt className="text-blue-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">{userStats?.totalAnalyses || 0}</div>
+                  <div className="text-gray-600 text-sm">Total Analyses</div>
+                </div>
+                
+                <div className="text-center p-4 bg-green-50 rounded-xl">
+                  <FaStar className="text-green-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {userStats?.averageScore ? Math.round(userStats.averageScore) + '%' : '0%'}
+                  </div>
+                  <div className="text-gray-600 text-sm">Average Score</div>
+                </div>
+                
+                <div className="text-center p-4 bg-yellow-50 rounded-xl">
+                  <FaAward className="text-yellow-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {userStats?.highestScore ? Math.round(userStats.highestScore) + '%' : '0%'}
+                  </div>
+                  <div className="text-gray-600 text-sm">Highest Score</div>
+                </div>
+                
+                <div className="text-center p-4 bg-purple-50 rounded-xl">
+                  <FaUser className="text-purple-500 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-800">
+                    {userStats?.recentAnalyses?.length || 0}
+                  </div>
+                  <div className="text-gray-600 text-sm">Recent</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Modal for Editing */}
-      {isEditing && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-[90%] max-w-lg p-6 shadow-xl space-y-4">
-            <h2 className="text-xl font-semibold mb-4 text-indigo-700">
-              Edit Your Profile
-            </h2>
-
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              value={form.name}
-              onChange={handleInputChange}
-              className="w-full border rounded px-4 py-2"
-            />
-            <input
-              type="text"
-              name="profession"
-              placeholder="Profession"
-              value={form.profession}
-              onChange={handleInputChange}
-              className="w-full border rounded px-4 py-2"
-            />
-            <input
-              type="text"
-              name="location"
-              placeholder="Location"
-              value={form.location}
-              onChange={handleInputChange}
-              className="w-full border rounded px-4 py-2"
-            />
-            <textarea
-              name="bio"
-              rows="4"
-              placeholder="Your bio..."
-              value={form.bio}
-              onChange={handleInputChange}
-              className="w-full border rounded px-4 py-2"
-            />
-
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-}
+};
 
 export default Profile;

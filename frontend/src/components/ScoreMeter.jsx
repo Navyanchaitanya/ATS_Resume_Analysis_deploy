@@ -1,54 +1,86 @@
-// frontend/src/components/ScoreMeter.jsx
 import React from "react";
 import { motion } from "framer-motion";
 
 const ScoreMeter = ({ score }) => {
   const rawTotal = score?.total;
   const total = typeof rawTotal === "number" && !isNaN(rawTotal)
-    ? rawTotal.toFixed(1)
+    ? Math.min(rawTotal, 100)
     : 0;
 
-  const radius = 60;
-  const stroke = 10;
+  const radius = 70;
+  const stroke = 12;
   const normalizedRadius = radius - stroke / 2;
   const circumference = 2 * Math.PI * normalizedRadius;
-  const percentage = Math.min(total, 100);
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const strokeDashoffset = circumference - (total / 100) * circumference;
+
+  // Color based on score
+  const getScoreColor = (score) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-blue-600";
+    if (score >= 40) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getStrokeColor = (score) => {
+    if (score >= 80) return "#16a34a";
+    if (score >= 60) return "#2563eb";
+    if (score >= 40) return "#ca8a04";
+    return "#dc2626";
+  };
 
   return (
     <motion.div
-      className="w-full flex justify-center items-center mt-10 mb-6"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center justify-center"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6 }}
     >
-      <div className="relative w-[150px] h-[150px]">
-        <svg height="150" width="150">
+      <div className="relative w-40 h-40">
+        <svg height="140" width="140" className="transform -rotate-90">
+          {/* Background circle */}
           <circle
             stroke="#e5e7eb"
             fill="transparent"
             strokeWidth={stroke}
             r={normalizedRadius}
-            cx="75"
-            cy="75"
+            cx="70"
+            cy="70"
           />
+          {/* Progress circle */}
           <motion.circle
-            stroke="#4f46e5"
+            stroke={getStrokeColor(total)}
             fill="transparent"
             strokeWidth={stroke}
             strokeLinecap="round"
             r={normalizedRadius}
-            cx="75"
-            cy="75"
+            cx="70"
+            cy="70"
             strokeDasharray={circumference}
-            strokeDashoffset={circumference}
+            initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
-          <div className="text-4xl font-bold text-indigo-700">{total}%</div>
-          <div className="text-xs font-semibold text-gray-600">Total Score</div>
+        
+        {/* Score display */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+            className={`text-3xl font-bold ${getScoreColor(total)}`}
+          >
+            {total}%
+          </motion.div>
+          <div className="text-sm font-medium text-gray-600 mt-1">ATS Score</div>
+          
+          {/* Score rating */}
+          <div className="text-xs font-semibold mt-2">
+            {total >= 80 ? "Excellent! 🎉" :
+             total >= 60 ? "Good 👍" :
+             total >= 40 ? "Fair 👌" :
+             "Needs improvement 📝"}
+          </div>
         </div>
       </div>
     </motion.div>
