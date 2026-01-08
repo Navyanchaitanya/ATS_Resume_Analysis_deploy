@@ -1,0 +1,12 @@
+{
+  "name": "ats-resume-checker",
+  "version": "1.0.0",
+  "description": "ATS Resume Checker - Full Stack",
+  "scripts": {
+    "render-build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "start": "cd backend && npm start"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
