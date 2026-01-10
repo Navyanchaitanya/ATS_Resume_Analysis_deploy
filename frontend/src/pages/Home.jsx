@@ -221,8 +221,8 @@ const Home = () => {
 
   const stats = [
     { number: "98%", label: "Accuracy Rate", icon: <FaAward /> },
-    { number: "50K+", label: "Resumes Analyzed", icon: <FaFileAlt /> },
-    { number: "4.8/5", label: "User Rating", icon: <FaStar /> },
+    { number: "5", label: "Scoring Metrices", icon: <FaFileAlt /> },
+    { number: "100%", label: "Data Secure", icon: <FaStar /> },
     { number: "30s", label: "Average Analysis Time", icon: <FaClock /> }
   ];
 
