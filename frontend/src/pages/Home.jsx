@@ -221,7 +221,8 @@ const Home = () => {
 
   const stats = [
     { number: "98%", label: "Accuracy Rate", icon: <FaAward /> },
-   
+    { number: "5", label: "Scoring Metrics", icon: <FaFileAlt /> },
+    { number: "100%", label: "Secure and Privacy", icon: <FaStar /> },
     { number: "30s", label: "Average Analysis Time", icon: <FaClock /> }
   ];
 
